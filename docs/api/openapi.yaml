@@ -1,0 +1,2488 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AgentProof local authentication API",
+    "version": "0.1.0",
+    "description": "DEVELOPMENT SIMULATION ONLY. Primary Agent/verifier APIs. Runtime request schemas are reused; response schemas and auxiliary registry/issuer internal APIs are not fully described. Native JSON Schema validator, not Zod."
+  },
+  "paths": {
+    "/api/v1/challenges": {
+      "post": {
+        "summary": "Issue request-bound passport challenge",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/challengeRequestSchema"
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/api/v1/authenticate": {
+      "post": {
+        "summary": "Run the five sequential identity filters",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/presentationSchema"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Signature-Input",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "AgentProof strict RFC9421 Ed25519 profile. Use the provided crypto helpers; preserve the exact body bytes."
+          },
+          {
+            "in": "header",
+            "name": "Signature",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "AgentProof strict RFC9421 Ed25519 profile. Use the provided crypto helpers; preserve the exact body bytes."
+          },
+          {
+            "in": "header",
+            "name": "Content-Digest",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "AgentProof strict RFC9421 Ed25519 profile. Use the provided crypto helpers; preserve the exact body bytes."
+          }
+        ]
+      }
+    },
+    "/api/v1/protected/mock-purchase": {
+      "post": {
+        "summary": "Redeem one-use proof-bound authentication ticket",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "authenticationTicket": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/purchaseSchema"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Signature-Input",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "AgentProof strict RFC9421 Ed25519 profile. Use the provided crypto helpers; preserve the exact body bytes."
+          },
+          {
+            "in": "header",
+            "name": "Signature",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "AgentProof strict RFC9421 Ed25519 profile. Use the provided crypto helpers; preserve the exact body bytes."
+          },
+          {
+            "in": "header",
+            "name": "Content-Digest",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "AgentProof strict RFC9421 Ed25519 profile. Use the provided crypto helpers; preserve the exact body bytes."
+          }
+        ],
+        "description": "Single-use authentication ticket plus runtime-key HTTP proof, exact original purchase body. No actual purchase/payment or authorization policy is evaluated."
+      }
+    },
+    "/api/v1/traces": {
+      "get": {
+        "summary": "List recent authentication traces",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "parameters": []
+      }
+    },
+    "/api/v1/traces/{traceId}": {
+      "get": {
+        "summary": "Read results and audit integrity",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "traceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/evidence/{hash}": {
+      "get": {
+        "summary": "Read independent evidence",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "hash",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/modules": {
+      "get": {
+        "summary": "Read versioned module configuration",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "parameters": []
+      }
+    },
+    "/api/v1/agents/{agentId}": {
+      "get": {
+        "summary": "Read simulated identity",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/security-events": {
+      "get": {
+        "summary": "Read non-VERIFIED request summaries",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "parameters": []
+      }
+    },
+    "/api/v1/modules/{moduleId}": {
+      "patch": {
+        "summary": "Change administrator-only filter settings",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/modulePatchSchema"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "moduleId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/execution-mode": {
+      "patch": {
+        "summary": "Change failFast / continueAll",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "mode": {
+                    "enum": [
+                      "failFast",
+                      "continueAll"
+                    ]
+                  }
+                },
+                "required": [
+                  "expectedVersion",
+                  "mode"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/api/agents/prepare": {
+      "post": {
+        "summary": "Local development Agent action: /api/agents/prepare",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/api/agents/register": {
+      "post": {
+        "summary": "Local development Agent action: /api/agents/register",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/api/passports": {
+      "post": {
+        "summary": "Local development Agent action: /api/passports",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/api/company-attestations": {
+      "post": {
+        "summary": "Local development Agent action: /api/company-attestations",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/api/tap/requests": {
+      "post": {
+        "summary": "Local development Agent action: /api/tap/requests",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/api/scenarios/{scenarioId}/run": {
+      "post": {
+        "summary": "Local development Agent action: /api/scenarios/{scenarioId}/run",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenarioId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/documents": {
+      "get": {
+        "summary": "Read public development Agent documents",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "parameters": []
+      }
+    },
+    "/.well-known/agent-card.json": {
+      "get": {
+        "summary": "Read public development Agent documents",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "parameters": []
+      }
+    },
+    "/.well-known/agent-registration.json": {
+      "get": {
+        "summary": "Read public development Agent documents",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "parameters": []
+      }
+    },
+    "/api/presentations": {
+      "post": {
+        "summary": "Build, sign, submit and redeem a mock purchase",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success or authentication verdict. A 200 authentication response can contain REJECT/PARTIAL; inspect verdict."
+          },
+          "400": {
+            "description": "Invalid schema, signature, target, or configuration conflict"
+          },
+          "401": {
+            "description": "Administrator token missing or invalid"
+          },
+          "503": {
+            "description": "Source temporarily unavailable / server busy"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "merchant": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "productId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "purpose": {
+                    "enum": [
+                      "payment",
+                      "browsing"
+                    ]
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "expirationSeconds": {
+                    "type": "integer",
+                    "minimum": 10,
+                    "maximum": 300
+                  }
+                },
+                "required": [
+                  "merchant",
+                  "productId",
+                  "amount",
+                  "purpose",
+                  "quantity",
+                  "expirationSeconds"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "bindingSchema": {
+        "type": "object",
+        "properties": {
+          "subjectAgent": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "registry": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "agentId": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,14})$"
+              }
+            },
+            "required": [
+              "chainId",
+              "registry",
+              "agentId"
+            ],
+            "additionalProperties": false
+          },
+          "ownerWallet": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "runtimeKeyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "publicKeyMultibase": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "apsAgentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "endpoint": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "programVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "issuedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "subjectAgent",
+          "ownerWallet",
+          "runtimeKeyId",
+          "publicKeyMultibase",
+          "apsAgentId",
+          "endpoint",
+          "programVersion",
+          "issuedAt",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "cardSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "provider": {
+            "type": "object",
+            "properties": {
+              "organization": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              }
+            },
+            "required": [
+              "organization",
+              "url"
+            ],
+            "additionalProperties": false
+          },
+          "supportedInterfaces": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "protocolBinding": {
+                  "enum": [
+                    "JSONRPC",
+                    "HTTP+JSON",
+                    "GRPC"
+                  ]
+                },
+                "protocolVersion": {
+                  "const": "1.0"
+                }
+              },
+              "required": [
+                "url",
+                "protocolBinding",
+                "protocolVersion"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 128
+          },
+          "capabilities": {
+            "type": "object",
+            "properties": {
+              "extensions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "uri": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "params": {
+                      "type": "object",
+                      "properties": {
+                        "subjectAgent": {
+                          "type": "object",
+                          "properties": {
+                            "chainId": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "registry": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "agentId": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9][0-9]{0,14})$"
+                            }
+                          },
+                          "required": [
+                            "chainId",
+                            "registry",
+                            "agentId"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "ownerWallet": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "runtimeKeyId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "publicKeyMultibase": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "apsAgentId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "endpoint": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "programVersion": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "issuedAt": {
+                          "type": "string",
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                        }
+                      },
+                      "required": [
+                        "subjectAgent",
+                        "ownerWallet",
+                        "runtimeKeyId",
+                        "publicKeyMultibase",
+                        "apsAgentId",
+                        "endpoint",
+                        "programVersion",
+                        "issuedAt",
+                        "expiresAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "uri",
+                    "required",
+                    "params"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 128
+              },
+              "streaming": {
+                "type": "boolean"
+              },
+              "pushNotifications": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "extensions"
+            ],
+            "additionalProperties": false
+          },
+          "defaultInputModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "minItems": 1,
+            "maxItems": 128
+          },
+          "defaultOutputModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "minItems": 1,
+            "maxItems": 128
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "minItems": 0,
+                  "maxItems": 128
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "description",
+                "tags"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 128
+          },
+          "securitySchemes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "httpAuthSecurityScheme": {
+                  "type": "object",
+                  "properties": {
+                    "scheme": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "bearerFormat": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    }
+                  },
+                  "required": [
+                    "scheme"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "httpAuthSecurityScheme"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "securityRequirements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "schemes": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "minItems": 0,
+                        "maxItems": 128
+                      }
+                    },
+                    "required": [
+                      "list"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "schemes"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 128
+          },
+          "signatures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "protected": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "signature": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{86}$"
+                }
+              },
+              "required": [
+                "protected",
+                "signature"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 128
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "version",
+          "provider",
+          "supportedInterfaces",
+          "capabilities",
+          "defaultInputModes",
+          "defaultOutputModes",
+          "skills",
+          "securitySchemes",
+          "securityRequirements"
+        ],
+        "additionalProperties": false
+      },
+      "challengeRequestSchema": {
+        "type": "object",
+        "properties": {
+          "subjectAgent": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "registry": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "agentId": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,14})$"
+              }
+            },
+            "required": [
+              "chainId",
+              "registry",
+              "agentId"
+            ],
+            "additionalProperties": false
+          },
+          "runtimeKeyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "requestHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "subjectAgent",
+          "runtimeKeyId",
+          "requestId",
+          "requestHash"
+        ],
+        "additionalProperties": false
+      },
+      "companySchema": {
+        "type": "object",
+        "properties": {
+          "attestationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "issuer": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "subjectAgent": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "registry": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "agentId": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,14})$"
+              }
+            },
+            "required": [
+              "chainId",
+              "registry",
+              "agentId"
+            ],
+            "additionalProperties": false
+          },
+          "operatorCompanyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "responsibleUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "ownerWallet": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "runtimeKeyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "endpoint": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "programVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "validFrom": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED",
+              "REVOKED",
+              "EXPIRED"
+            ]
+          },
+          "statusUri": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{86}$"
+          }
+        },
+        "required": [
+          "attestationId",
+          "issuer",
+          "subjectAgent",
+          "operatorCompanyId",
+          "responsibleUserId",
+          "ownerWallet",
+          "runtimeKeyId",
+          "endpoint",
+          "programVersion",
+          "validFrom",
+          "expiresAt",
+          "status",
+          "statusUri",
+          "signature"
+        ],
+        "additionalProperties": false
+      },
+      "hashSchema": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "identitySchema": {
+        "type": "object",
+        "properties": {
+          "chainId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "registry": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "agentId": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,14})$"
+          }
+        },
+        "required": [
+          "chainId",
+          "registry",
+          "agentId"
+        ],
+        "additionalProperties": false
+      },
+      "modulePatchSchema": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ],
+        "additionalProperties": false
+      },
+      "passportSchema": {
+        "type": "object",
+        "properties": {
+          "record_type": {
+            "const": "aps.agent-passport"
+          },
+          "version": {
+            "const": "2.0"
+          },
+          "passport_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "agent_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "verification_method": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "public_key_multibase": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "issued_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "expires_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "nonce": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          },
+          "self_asserted": {
+            "type": "object",
+            "properties": {
+              "display_name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "minItems": 0,
+                "maxItems": 128
+              }
+            },
+            "required": [
+              "capabilities"
+            ],
+            "additionalProperties": false
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{86}$"
+          }
+        },
+        "required": [
+          "record_type",
+          "version",
+          "passport_id",
+          "agent_id",
+          "verification_method",
+          "public_key_multibase",
+          "issued_at",
+          "expires_at",
+          "nonce",
+          "self_asserted",
+          "signature"
+        ],
+        "additionalProperties": false
+      },
+      "presentationSchema": {
+        "type": "object",
+        "properties": {
+          "presentationVersion": {
+            "const": "agentproof-presentation-v1"
+          },
+          "requestId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,100}$"
+          },
+          "claimedIdentity": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "registry": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "agentId": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,14})$"
+              }
+            },
+            "required": [
+              "chainId",
+              "registry",
+              "agentId"
+            ],
+            "additionalProperties": false
+          },
+          "presentedAgentCard": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "provider": {
+                "type": "object",
+                "properties": {
+                  "organization": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "url": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": [
+                  "organization",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              "supportedInterfaces": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "protocolBinding": {
+                      "enum": [
+                        "JSONRPC",
+                        "HTTP+JSON",
+                        "GRPC"
+                      ]
+                    },
+                    "protocolVersion": {
+                      "const": "1.0"
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "protocolBinding",
+                    "protocolVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 128
+              },
+              "capabilities": {
+                "type": "object",
+                "properties": {
+                  "extensions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "uri": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "params": {
+                          "type": "object",
+                          "properties": {
+                            "subjectAgent": {
+                              "type": "object",
+                              "properties": {
+                                "chainId": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "registry": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "agentId": {
+                                  "type": "string",
+                                  "pattern": "^(0|[1-9][0-9]{0,14})$"
+                                }
+                              },
+                              "required": [
+                                "chainId",
+                                "registry",
+                                "agentId"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "ownerWallet": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "runtimeKeyId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "publicKeyMultibase": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "apsAgentId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "endpoint": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "programVersion": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "issuedAt": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                            },
+                            "expiresAt": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                            }
+                          },
+                          "required": [
+                            "subjectAgent",
+                            "ownerWallet",
+                            "runtimeKeyId",
+                            "publicKeyMultibase",
+                            "apsAgentId",
+                            "endpoint",
+                            "programVersion",
+                            "issuedAt",
+                            "expiresAt"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "uri",
+                        "required",
+                        "params"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 128
+                  },
+                  "streaming": {
+                    "type": "boolean"
+                  },
+                  "pushNotifications": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "extensions"
+                ],
+                "additionalProperties": false
+              },
+              "defaultInputModes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "minItems": 1,
+                "maxItems": 128
+              },
+              "defaultOutputModes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "minItems": 1,
+                "maxItems": 128
+              },
+              "skills": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "description": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      "minItems": 0,
+                      "maxItems": 128
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "tags"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 128
+              },
+              "securitySchemes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "httpAuthSecurityScheme": {
+                      "type": "object",
+                      "properties": {
+                        "scheme": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "bearerFormat": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        }
+                      },
+                      "required": [
+                        "scheme"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "httpAuthSecurityScheme"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "securityRequirements": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "schemes": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "list": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "minItems": 0,
+                            "maxItems": 128
+                          }
+                        },
+                        "required": [
+                          "list"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "schemes"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 128
+              },
+              "signatures": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "protected": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "signature": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]{86}$"
+                    }
+                  },
+                  "required": [
+                    "protected",
+                    "signature"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 128
+              }
+            },
+            "required": [
+              "name",
+              "description",
+              "version",
+              "provider",
+              "supportedInterfaces",
+              "capabilities",
+              "defaultInputModes",
+              "defaultOutputModes",
+              "skills",
+              "securitySchemes",
+              "securityRequirements"
+            ],
+            "additionalProperties": false
+          },
+          "presentedPassport": {
+            "type": "object",
+            "properties": {
+              "record_type": {
+                "const": "aps.agent-passport"
+              },
+              "version": {
+                "const": "2.0"
+              },
+              "passport_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "agent_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "verification_method": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "public_key_multibase": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "issued_at": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "expires_at": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "nonce": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{32}$"
+              },
+              "self_asserted": {
+                "type": "object",
+                "properties": {
+                  "display_name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "capabilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "minItems": 0,
+                    "maxItems": 128
+                  }
+                },
+                "required": [
+                  "capabilities"
+                ],
+                "additionalProperties": false
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{86}$"
+              }
+            },
+            "required": [
+              "record_type",
+              "version",
+              "passport_id",
+              "agent_id",
+              "verification_method",
+              "public_key_multibase",
+              "issued_at",
+              "expires_at",
+              "nonce",
+              "self_asserted",
+              "signature"
+            ],
+            "additionalProperties": false
+          },
+          "companyAttestation": {
+            "type": "object",
+            "properties": {
+              "attestationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "issuer": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "subjectAgent": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "registry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "agentId": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,14})$"
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "registry",
+                  "agentId"
+                ],
+                "additionalProperties": false
+              },
+              "operatorCompanyId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "responsibleUserId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "ownerWallet": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "runtimeKeyId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "endpoint": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "programVersion": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "validFrom": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "expiresAt": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "status": {
+                "enum": [
+                  "ACTIVE",
+                  "SUSPENDED",
+                  "REVOKED",
+                  "EXPIRED"
+                ]
+              },
+              "statusUri": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{86}$"
+              }
+            },
+            "required": [
+              "attestationId",
+              "issuer",
+              "subjectAgent",
+              "operatorCompanyId",
+              "responsibleUserId",
+              "ownerWallet",
+              "runtimeKeyId",
+              "endpoint",
+              "programVersion",
+              "validFrom",
+              "expiresAt",
+              "status",
+              "statusUri",
+              "signature"
+            ],
+            "additionalProperties": false
+          },
+          "tapRequest": {
+            "type": "object",
+            "properties": {
+              "merchant": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "purpose": {
+                "enum": [
+                  "payment",
+                  "browsing"
+                ]
+              },
+              "productId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "amount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "currency": {
+                "const": "KRW"
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100000
+              },
+              "createdAt": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "expiresAt": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "nonce": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{32}$"
+              }
+            },
+            "required": [
+              "merchant",
+              "purpose",
+              "productId",
+              "amount",
+              "currency",
+              "quantity",
+              "createdAt",
+              "expiresAt",
+              "nonce"
+            ],
+            "additionalProperties": false
+          },
+          "submittedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "bundleHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "passportProof": {
+            "type": "object",
+            "properties": {
+              "challengeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{86}$"
+              }
+            },
+            "required": [
+              "challengeId",
+              "signature"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "presentationVersion",
+          "requestId",
+          "claimedIdentity",
+          "presentedAgentCard",
+          "tapRequest",
+          "submittedAt",
+          "bundleHash"
+        ],
+        "additionalProperties": false
+      },
+      "purchaseSchema": {
+        "type": "object",
+        "properties": {
+          "merchant": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "purpose": {
+            "enum": [
+              "payment",
+              "browsing"
+            ]
+          },
+          "productId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currency": {
+            "const": "KRW"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "createdAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "nonce": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        },
+        "required": [
+          "merchant",
+          "purpose",
+          "productId",
+          "amount",
+          "currency",
+          "quantity",
+          "createdAt",
+          "expiresAt",
+          "nonce"
+        ],
+        "additionalProperties": false
+      },
+      "registrationSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "image": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "endpoint": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "version": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                }
+              },
+              "required": [
+                "name",
+                "endpoint"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 128
+          },
+          "registrations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "agentId": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "agentRegistry": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                }
+              },
+              "required": [
+                "agentId",
+                "agentRegistry"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 128
+          },
+          "agentproof": {
+            "type": "object",
+            "properties": {
+              "runtimeBindingHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "runtimeEndpoint": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              }
+            },
+            "required": [
+              "runtimeBindingHash",
+              "runtimeEndpoint"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "type",
+          "name",
+          "description",
+          "image",
+          "active",
+          "services",
+          "registrations",
+          "agentproof"
+        ],
+        "additionalProperties": false
+      },
+      "signatureSchema": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{86}$"
+      },
+      "timeSchema": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+      }
+    },
+    "securitySchemes": {
+      "adminBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Verifier administrator secret; never send it to the Agent service."
+      },
+      "authenticationTicket": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Short-lived ticket, insufficient without the request runtime-key signature."
+      }
+    }
+  }
+}

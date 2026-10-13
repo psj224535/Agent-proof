@@ -1,0 +1,15 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
+import {canonical,hash,keyPair,signBytes,verifyBytes,base58Decode,base58Encode} from '../packages/crypto/index.ts';
+import {parseJsonStrict} from '../packages/shared-schemas/json.ts';
+import {isGlobalAddress,SafeFetcher} from '../packages/network/safe-fetch.ts';
+import {fixture} from './helpers.ts';import {Store} from '../packages/storage/store.ts';import {SQLite} from '../packages/storage/sql.ts';
+import {parseSignatureInput} from '../packages/visa-tap-filter/http-signatures.ts';
+test('37 rejects duplicate and escaped-duplicate JSON keys',()=>{for(const s of ['{"x":1,"x":2}','{"x":1,"\\u0078":2}'])assert.throws(()=>parseJsonStrict(s));});
+test('38 rejects lone surrogates, invalid UTF-8 and unsafe integers',()=>{assert.throws(()=>parseJsonStrict('"\\ud800"'));assert.throws(()=>parseJsonStrict(Buffer.from([0xff])));assert.throws(()=>parseJsonStrict('9007199254740993'));assert.throws(()=>canonical({x:NaN}));});
+test('39 canonical order and negative zero',()=>{assert.equal(canonical({b:2,a:-0}),JSON.stringify({a:0,b:2}));assert.equal(hash({b:2,a:1}),hash({a:1,b:2}));});
+test('40 private, metadata, mapped IPv6 and reserved targets blocked',()=>{for(const ip of ['127.0.0.1','10.0.0.1','169.254.169.254','172.16.0.1','192.168.1.1','100.64.0.1','192.0.2.1','::1','::ffff:127.0.0.1','fc00::1','2001:db8::1'])assert.equal(isGlobalAddress(ip),false,ip);assert.equal(isGlobalAddress('8.8.8.8'),true);});
+test('41 unsafe URI schemes and localhost blocked before connection',async()=>{const f=new SafeFetcher();for(const u of ['http://example.com/x','file:///etc/passwd','https://user:password@example.com/x','https://127.0.0.1/x','https://169.254.169.254/latest/meta-data'])await assert.rejects(f.json(u));});
+test('42 durable nonce survives reopening SQLite',async()=>{const dir=mkdtempSync(join(tmpdir(),'agentproof-'));const path=join(dir,'state.db');const f=await fixture(path);const {result}=await f.run();assert.equal(result.verdict,'VERIFIED');const rows=await f.store.sql.all('SELECT scope,nonce FROM nonces');await f.close();const reopened=new Store(new SQLite(path));await reopened.init();assert.equal(await reopened.hasNonce(String(rows[0].scope),String(rows[0].nonce)),true);await reopened.close();rmSync(dir,{recursive:true,force:true});});
+test('43 rejects extra signature components and duplicate parameters',()=>{assert.throws(()=>parseSignatureInput('sig1=("@path")'));assert.throws(()=>parseSignatureInput('sig1=("@method" "@authority" "@path" "content-digest");created=1;created=2'));});
+test('44 Ed25519 rejects wrong keys',()=>{const k=keyPair(),wrong=keyPair();const s=signBytes(k,Buffer.from('message'));assert.equal(verifyBytes(k.publicKeyMultibase,Buffer.from('message'),s),true);assert.equal(verifyBytes(wrong.publicKeyMultibase,Buffer.from('message'),s),false);assert.equal(base58Encode(base58Decode('1112')),'1112');});

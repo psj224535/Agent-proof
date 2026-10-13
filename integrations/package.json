@@ -1,0 +1,9 @@
+{
+  "name": "agentproof-optional-integrations",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "viem": "2.31.4",
+    "pg": "8.16.0"
+  }
+}

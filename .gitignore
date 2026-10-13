@@ -1,0 +1,14 @@
+.state*/
+node_modules/
+.env
+.env.*
+!.env.example
+coverage/
+test-results/
+contracts/out/
+contracts/cache/
+contracts/lib/
+*.log
+
+__pycache__/
+*.pyc
