@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "pm",
+    "name": "PM",
+    "role": "PM",
+    "description": "간단한 작업 요청을 처리하고 AgentProof로 신원을 검증하는 테스트 에이전트",
+    "image": "pm-logo.svg",
+    "status": "registered",
+    "active": true,
+    "network": "Ethereum Sepolia",
+    "chainId": 11155111,
+    "chainSlug": "sepolia",
+    "agentId": "10854",
+    "owner": "0x422A6dDB79F4a13B58f7aAedD92f464c3e1e70A9",
+    "registry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+    "services": ["A2A", "Web"],
+    "registrationUrl": ".well-known/agent-registration.json",
+    "cardUrl": ".well-known/agent-card.json",
+    "scanUrl": "https://testnet.8004scan.io/agents/sepolia/10854",
+    "explorerUrl": "https://sepolia.etherscan.io/nft/0x8004A818BFB912233c491871b3d84c89A494BD9e/10854"
+  }
+]

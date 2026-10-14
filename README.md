@@ -19,6 +19,8 @@ npm run start:sepolia
 - Configured owner: `0x422A6dDB79F4a13B58f7aAedD92f464c3e1e70A9`
 - Ethereum Sepolia IdentityRegistry: `0x8004A818BFB912233c491871b3d84c89A494BD9e`
 
+공개 사이트는 `site/agents.json`을 읽는 다중 Agent 디렉터리입니다. PM 카드에서 8004scan Testnet, Sepolia Etherscan, Registration JSON, A2A Agent Card를 바로 확인할 수 있습니다. 새 역할 Agent의 권장 문서 경로와 카탈로그 추가 형식은 `docs/public-agent-directory.md`를 참조하십시오. 이미 온체인에 기록된 PM의 루트 `agentURI`는 변경하지 않습니다.
+
 등록 콘솔에서 MetaMask를 연결하면 다음 두 건을 순서대로 승인합니다.
 
 1. `register(agentURI)` — 공개 GitHub Pages registration JSON을 ERC-8004 agent NFT에 연결
@@ -75,7 +77,7 @@ npm test
 npm run test:e2e
 ```
 
-이번 환경에서 핵심/보안/Sepolia calldata 자동 테스트 49개 및 기존 실제 HTTP 통합 점검 20개가 통과했습니다. 최종 실행 기록은 `docs/testing/results.md`를 참조하십시오. HTTP 통합 테스트는 로컬 테스트 데이터와 필터 설정을 변경합니다. 운영 데이터에 실행하지 마십시오.
+이번 환경에서 핵심/보안/Sepolia calldata/공개 Agent 카탈로그 자동 테스트 51개 및 기존 실제 HTTP 통합 점검 20개가 통과했습니다. 최종 실행 기록은 `docs/testing/results.md`를 참조하십시오. HTTP 통합 테스트는 로컬 테스트 데이터와 필터 설정을 변경합니다. 운영 데이터에 실행하지 마십시오.
 
 선택적 타입 검사 도구 설치:
 ```sh

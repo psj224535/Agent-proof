@@ -4,7 +4,7 @@
 
 | Check | Result | Boundary |
 |---|---|---|
-| `npm test` | **49 passed, 0 failed** | Existing deterministic security suite plus exact Sepolia register/metadata calldata and public-document schema tests |
+| `npm test` | **51 passed, 0 failed** | Existing deterministic security suite plus exact Sepolia calldata, public-document schema and multi-Agent catalog integrity tests |
 | `npm run test:e2e` | **20 checks passed** | Real HTTP to four separate running local processes; registry and issuer remain test simulations |
 | TypeScript strict no-emit check | **Passed** | Installed TypeScript 5.8.3 / Node types 25.1.0; runtime tested on Node 22.16.0 |
 | Offline browser UI smoke | **Passed** | All browser networking blocked; recorded synthetic fixtures render Agent setup/result, five filters, dashboard/detail/modules, mobile widths; no JavaScript page errors |
@@ -13,7 +13,7 @@
 | Sepolia register estimate | **Passed (read-only)** | Owner balance 0.01 Sepolia ETH; zero-value `register(string)` estimated at 833625 gas; no transaction sent |
 | Integration dependency audit | **0 known vulnerabilities** | `viem` 2.57.6 and locked transitive dependencies checked with npm audit |
 
-Unit/security log, HTTP log and offline-UI log are stored alongside this file. Test case names are in `docs/demo/scenarios.md`. Tests 45–46 additionally prevent simulation or test company evidence being used to issue a production-assurance ticket.
+Unit/security log, HTTP log and offline-UI log are stored alongside this file. Test case names are in `docs/demo/scenarios.md`. Tests 45–46 additionally prevent simulation or test company evidence being used to issue a production-assurance ticket; tests 50–51 validate unique catalog identities and keep the PM card synchronized with its ERC-8004 registration document.
 
 ## Not passed / not executed
 

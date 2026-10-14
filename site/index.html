@@ -1,1 +1,83 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PM · AgentProof</title><link rel="stylesheet" href="style.css"><meta name="description" content="PM AgentProof ERC-8004 identity on Ethereum Sepolia"></head><body><main><div class="logo">PM</div><p class="eyebrow">AGENTPROOF · ETHEREUM SEPOLIA</p><h1>PM</h1><p class="lead">간단한 작업 요청을 처리하고 AgentProof로 신원을 검증하는 테스트 에이전트</p><div class="status"><i></i><span>ERC‑8004 testnet identity</span></div><nav><a href=".well-known/agent-registration.json">Registration JSON ↗</a><a href=".well-known/agent-card.json">A2A Agent Card ↗</a><a href="https://sepolia.etherscan.io/address/0x8004A818BFB912233c491871b3d84c89A494BD9e">IdentityRegistry ↗</a></nav><p class="note">이 페이지는 Ethereum Sepolia 테스트넷용입니다. 메인넷 자산, 실제 기업 KYC, Visa 인증 또는 결제 실행을 의미하지 않습니다. ERC‑8004는 draft 표준입니다.</p></main></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AgentProof에서 관리하는 ERC-8004 테스트넷 에이전트 디렉터리">
+  <title>AgentProof · Agent Directory</title>
+  <link rel="icon" href="pm-logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="AgentProof Agent Directory 홈">
+      <span class="brand-mark" aria-hidden="true">AP</span>
+      <span>AgentProof</span>
+    </a>
+    <a class="header-link" href="https://testnet.8004scan.io/agents" target="_blank" rel="noreferrer">
+      8004scan <span aria-hidden="true">↗</span>
+    </a>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">PUBLIC AGENT DIRECTORY · ETHEREUM TESTNET</p>
+      <h1 id="page-title">역할별 Agent를<br><span>한곳에서 확인하세요.</span></h1>
+      <p class="hero-copy">온체인 ERC-8004 신원과 공개 Agent 문서를 연결합니다. 각 Agent의 역할, 네트워크, 소유자와 외부 탐색기 기록을 독립적으로 확인할 수 있습니다.</p>
+
+      <dl class="summary" aria-label="Agent 디렉터리 요약">
+        <div><dt id="agent-count">—</dt><dd>Agents</dd></div>
+        <div><dt id="active-count">—</dt><dd>Active</dd></div>
+        <div><dt id="network-count">—</dt><dd>Networks</dd></div>
+      </dl>
+    </section>
+
+    <section class="directory" aria-labelledby="directory-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">REGISTRY</p>
+          <h2 id="directory-title">등록된 Agent</h2>
+        </div>
+        <p>새 Agent는 카탈로그에 추가하면 같은 화면에 역할별로 표시됩니다.</p>
+      </div>
+
+      <div class="toolbar">
+        <label class="search-field">
+          <span class="sr-only">Agent 검색</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.4-4.4m2.4-5.1A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z"/></svg>
+          <input id="agent-search" type="search" placeholder="이름, 역할, Agent ID 또는 지갑 주소 검색" autocomplete="off">
+        </label>
+        <label class="role-field">
+          <span class="sr-only">역할 필터</span>
+          <select id="role-filter">
+            <option value="">모든 역할</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="agent-grid" class="agent-grid" aria-live="polite">
+        <p class="loading">Agent 카탈로그를 불러오는 중입니다.</p>
+      </div>
+      <p id="empty-state" class="empty-state" hidden>조건에 맞는 Agent가 없습니다.</p>
+    </section>
+
+    <section class="how-it-works" aria-labelledby="flow-title">
+      <div>
+        <p class="eyebrow">VERIFICATION FLOW</p>
+        <h2 id="flow-title">어디에서 무엇을 확인하나요?</h2>
+      </div>
+      <ol>
+        <li><span>01</span><div><b>IdentityRegistry</b><p>Agent ID, 소유자, 공개 문서 URI와 메타데이터 해시를 Sepolia에서 확인합니다.</p></div></li>
+        <li><span>02</span><div><b>Public documents</b><p>GitHub Pages의 Registration JSON과 A2A Agent Card에서 역할과 서비스 정보를 읽습니다.</p></div></li>
+        <li><span>03</span><div><b>External index</b><p>8004scan과 Etherscan에서 제3자 관점으로 같은 등록 정보를 확인합니다.</p></div></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    <p>Ethereum Sepolia 테스트넷용입니다. 메인넷 신원, 실제 기업 KYC, Visa 인증 또는 결제 실행을 의미하지 않습니다.</p>
+    <a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noreferrer">ERC-8004 draft <span aria-hidden="true">↗</span></a>
+  </footer>
+</body>
+</html>
