@@ -1,4 +1,82 @@
 {
-  "status": "PENDING_SEPOLIA_REGISTRATION",
-  "message": "The signed A2A Agent Card will replace this file after MetaMask registration."
+  "name": "PM",
+  "description": "간단한 작업 요청을 처리하고 AgentProof로 신원을 검증하는 테스트 에이전트",
+  "version": "1.0.0",
+  "provider": {
+    "organization": "PM · AgentProof test operator",
+    "url": "https://psj224535.github.io/Agent-proof"
+  },
+  "supportedInterfaces": [
+    {
+      "url": "https://psj224535.github.io/Agent-proof/a2a",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "capabilities": {
+    "extensions": [
+      {
+        "uri": "https://agentproof.example/extensions/runtime-identity/v1",
+        "required": true,
+        "params": {
+          "subjectAgent": {
+            "chainId": 11155111,
+            "registry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+            "agentId": "10854"
+          },
+          "ownerWallet": "0x422A6dDB79F4a13B58f7aAedD92f464c3e1e70A9",
+          "runtimeKeyId": "did:key:z6Mksjy5ScQMVU9RLcnAtkLfv4SaRTnfnV6KMYw93nBwfBBy#z6Mksjy5ScQMVU9RLcnAtkLfv4SaRTnfnV6KMYw93nBwfBBy",
+          "publicKeyMultibase": "z6Mksjy5ScQMVU9RLcnAtkLfv4SaRTnfnV6KMYw93nBwfBBy",
+          "apsAgentId": "did:key:z6Mksjy5ScQMVU9RLcnAtkLfv4SaRTnfnV6KMYw93nBwfBBy",
+          "endpoint": "https://psj224535.github.io/Agent-proof/a2a",
+          "programVersion": "1.0.0",
+          "issuedAt": "2026-10-14T11:12:54.078Z",
+          "expiresAt": "2027-10-14T11:12:54.078Z"
+        }
+      }
+    ],
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "authenticated-request",
+      "name": "Authenticated request",
+      "description": "AgentProof로 서명된 요청의 신원을 증명합니다.",
+      "tags": [
+        "authentication",
+        "erc-8004",
+        "a2a"
+      ]
+    }
+  ],
+  "securitySchemes": {
+    "agentproof": {
+      "httpAuthSecurityScheme": {
+        "scheme": "Bearer",
+        "bearerFormat": "AgentProof authentication ticket"
+      }
+    }
+  },
+  "securityRequirements": [
+    {
+      "schemes": {
+        "agentproof": {
+          "list": []
+        }
+      }
+    }
+  ],
+  "signatures": [
+    {
+      "protected": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDprZXk6ejZNa3NqeTVTY1FNVlU5UkxjbkF0a0xmdjRTYVJUbmZuVjZLTVl3OTNuQndmQkJ5I3o2TWtzank1U2NRTVZVOVJMY25BdGtMZnY0U2FSVG5mblY2S01ZdzkzbkJ3ZkJCeSIsInR5cCI6IkpPU0UifQ",
+      "signature": "9DjhYHBRKIf1A5WnHcmmlwJLQdzXMNMpwQFTwJv8ZoR0YslkJg0NbT5DKEV62mOpj4OLunEBS3boQXs9s0DrCA"
+    }
+  ]
 }

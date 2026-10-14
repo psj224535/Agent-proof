@@ -1,15 +1,32 @@
 {
   "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "PM",
-  "description": "Pending Sepolia registration; run npm run start:sepolia to create the final document.",
+  "description": "간단한 작업 요청을 처리하고 AgentProof로 신원을 검증하는 테스트 에이전트",
   "image": "https://psj224535.github.io/Agent-proof/pm-logo.svg",
-  "active": false,
+  "active": true,
   "services": [
-    {"name": "web", "endpoint": "https://psj224535.github.io/Agent-proof/"},
-    {"name": "A2A", "endpoint": "https://psj224535.github.io/Agent-proof/.well-known/agent-card.json", "version": "1.0"}
+    {
+      "name": "A2A",
+      "endpoint": "https://psj224535.github.io/Agent-proof/.well-known/agent-card.json",
+      "version": "1.0"
+    },
+    {
+      "name": "web",
+      "endpoint": "https://psj224535.github.io/Agent-proof/"
+    }
   ],
   "x402Support": false,
-  "registrations": [{"agentId": 0, "agentRegistry": "eip155:11155111:0x8004A818BFB912233c491871b3d84c89A494BD9e"}],
-  "supportedTrust": ["crypto-economic"],
-  "agentproof": {"runtimeBindingHash": "0000000000000000000000000000000000000000000000000000000000000000", "runtimeEndpoint": "https://psj224535.github.io/Agent-proof/a2a"}
+  "registrations": [
+    {
+      "agentId": 10854,
+      "agentRegistry": "eip155:11155111:0x8004A818BFB912233c491871b3d84c89A494BD9e"
+    }
+  ],
+  "supportedTrust": [
+    "crypto-economic"
+  ],
+  "agentproof": {
+    "runtimeBindingHash": "58735d10a224ab3f0aba787f0471d62708f68785ad9c217947ff2bf2a16a6c6c",
+    "runtimeEndpoint": "https://psj224535.github.io/Agent-proof/a2a"
+  }
 }
