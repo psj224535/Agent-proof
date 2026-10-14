@@ -9,11 +9,14 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "start": "node --experimental-strip-types scripts/dev.ts",
+    "start:sepolia": "node --experimental-strip-types scripts/sepolia.ts",
     "test": "node --experimental-strip-types --test --test-concurrency=1 tests/*.test.ts",
     "test:e2e": "node --experimental-strip-types scripts/http-e2e.ts",
     "admin-token": "node --experimental-strip-types scripts/admin-token.ts",
+    "admin-token:sepolia": "SEPOLIA_STATE_DIR=.state-sepolia STATE_DIR=.state-sepolia node --experimental-strip-types scripts/admin-token.ts",
     "typecheck": "node tools/typecheck/node_modules/typescript/bin/tsc --noEmit --typeRoots tools/typecheck/node_modules/@types",
     "check:sepolia": "node --experimental-strip-types scripts/check-sepolia.ts",
-    "docs:api": "node --experimental-strip-types scripts/generate-openapi.ts"
+    "docs:api": "node --experimental-strip-types scripts/generate-openapi.ts",
+    "manifest": "node --experimental-strip-types scripts/generate-manifest.ts"
   }
 }

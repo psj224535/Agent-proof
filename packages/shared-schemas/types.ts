@@ -4,7 +4,7 @@ export type ModuleId = 'erc8004' | 'a2a' | 'aps-passport' | 'company-attestation
 export const MODULE_IDS: ModuleId[] = ['erc8004','a2a','aps-passport','company-attestation','visa-tap'];
 export type Status = 'PASS' | 'PARTIAL' | 'FAIL' | 'SKIP' | 'ERROR';
 export type Verdict = 'VERIFIED' | 'PARTIAL' | 'REJECT';
-export type Profile = 'FULL_AUTH_V1' | 'WEB3_AGENT_V1' | 'EXPERIMENTAL_APS_V1' | 'CUSTOM_REDUCED' | 'DEVELOPMENT_MINIMAL';
+export type Profile = 'FULL_AUTH_V1' | 'WEB3_AGENT_V1' | 'EXPERIMENTAL_APS_V1' | 'CUSTOM_REDUCED' | 'DEVELOPMENT_MINIMAL' | 'SEPOLIA_TESTNET';
 export interface Identity { chainId: number; registry: string; agentId: string }
 export interface RuntimeBinding {
   subjectAgent: Identity; ownerWallet: string; runtimeKeyId: string;
@@ -74,6 +74,7 @@ export interface Registration {
   type:string;name:string;description:string;image:string;active:boolean;
   services:{name:string;endpoint:string;version?:string}[];
   registrations:{agentId:number;agentRegistry:string}[];
+  x402Support:boolean;supportedTrust?:string[];
   agentproof:{runtimeBindingHash:string;runtimeEndpoint:string};
 }
 export interface IssuerTrust {publicKeyMultibase:string;statusOrigin:string;testIssuer:boolean}

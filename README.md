@@ -4,6 +4,30 @@
 
 KAIST CS40008 프로젝트를 위한 독립형 구현입니다. 기존 저장소가 제공되지 않아 새 디렉터리에 작성했으며 기존 보고서나 사용자 파일을 수정하지 않았습니다. 외부 Agent가 제출한 정보를 그대로 믿지 않고, 별도의 출처에서 조회한 정보와 현재 요청의 암호학적 증명을 순차 검증합니다.
 
+## 실제 Ethereum Sepolia 모드
+
+로컬 시뮬레이터와 별도로, 공식 ERC-8004 IdentityRegistry를 사용하는 Sepolia 모드가 구현되어 있습니다. MetaMask가 모든 쓰기 트랜잭션을 직접 서명하며 서버는 개인키나 시드 문구를 요구하지 않습니다.
+
+```sh
+npm install --prefix integrations
+npm run start:sepolia
+```
+
+- Registration console: `http://127.0.0.1:3100`
+- Verifier dashboard: `http://127.0.0.1:3101`
+- Public agent site: `https://psj224535.github.io/Agent-proof/`
+- Configured owner: `0x422A6dDB79F4a13B58f7aAedD92f464c3e1e70A9`
+- Ethereum Sepolia IdentityRegistry: `0x8004A818BFB912233c491871b3d84c89A494BD9e`
+
+등록 콘솔에서 MetaMask를 연결하면 다음 두 건을 순서대로 승인합니다.
+
+1. `register(agentURI)` — 공개 GitHub Pages registration JSON을 ERC-8004 agent NFT에 연결
+2. `setMetadata(agentId, "agentproof.runtimeBinding.v1", bytes32)` — AgentProof 런타임 키 연결 해시를 온체인에 고정
+
+첫 트랜잭션이 확정되면 콘솔이 실제 `agentId`가 포함된 `site/.well-known/agent-registration.json`과 서명된 A2A Agent Card를 생성합니다. 이 두 파일을 commit/push하고 Pages 배포가 끝난 뒤 콘솔의 **공개 상태 확인**과 **인증 요청 보내기**를 실행합니다. Etherscan과 8004scan 링크도 콘솔에 표시됩니다. 자세한 순서와 장애 복구 방법은 `docs/sepolia-runbook.md`에 있습니다.
+
+Sepolia 모드는 실체인 증거를 사용하지만 테스트넷입니다. 결과의 `assuranceProfile`은 `SEPOLIA_TESTNET`이며 메인넷 신원, 기업 KYC, Visa 인증 또는 실제 결제를 뜻하지 않습니다. 공개 문서는 GitHub Pages의 HTTPS/TLS로 전송되고, localhost 화면은 같은 컴퓨터에서만 쓰는 제어 UI입니다.
+
 ## 바로 실행
 
 테스트 환경은 Node.js **22.16.0**입니다. Node 22.16 이상에서 네이티브 TypeScript stripping과 SQLite를 사용합니다. 다른 버전에서의 호환성은 별도 검증하지 않았습니다. 기본 데모에는 `npm install`, Docker, 지갑, API 키가 필요 없습니다.
@@ -51,7 +75,7 @@ npm test
 npm run test:e2e
 ```
 
-이번 환경에서 핵심/보안 자동 테스트 46개 및 실제 HTTP 통합 점검 20개가 통과했습니다. 최종 실행 기록은 `docs/testing/results.md`를 참조하십시오. HTTP 통합 테스트는 로컬 테스트 데이터와 필터 설정을 변경합니다. 운영 데이터에 실행하지 마십시오.
+이번 환경에서 핵심/보안/Sepolia calldata 자동 테스트 49개 및 기존 실제 HTTP 통합 점검 20개가 통과했습니다. 최종 실행 기록은 `docs/testing/results.md`를 참조하십시오. HTTP 통합 테스트는 로컬 테스트 데이터와 필터 설정을 변경합니다. 운영 데이터에 실행하지 마십시오.
 
 선택적 타입 검사 도구 설치:
 ```sh
@@ -67,7 +91,7 @@ npm run typecheck
 
 | 명세 요구 | 이번 제공 상태 |
 |---|---|
-| 실제 Anvil 등록/조회 및 Sepolia 시연 | **미완료**. 현재 등록부는 독립 프로세스의 시뮬레이터. 실제 체인 reader/조회 스크립트는 제공하지만 미실행 |
+| 실제 Anvil 등록/조회 및 Sepolia 시연 | Sepolia reader·MetaMask 등록 UI·실체인 verifier 구현 및 read-only 기동 검증 완료. 실제 쓰기 트랜잭션은 owner가 MetaMask에서 승인해야 완료 |
 | PostgreSQL replay 영속 저장 | 기본 데모는 **파일 기반 SQLite**. PostgreSQL 어댑터는 작성했으나 실제 DB 연결 미검증 |
 | Next.js, Fastify/Nest, Zod, Vitest | 네이티브 Node HTTP, 정적 HTML/JS, 제한형 JSON Schema validator, node:test로 대체 |
 | 공식 ERC-8004 reference contract 버전 고정 | ABI 부분집합만 제공. reference 구현 커밋 고정·배포는 아직 필요 |
@@ -94,4 +118,4 @@ npm start
 
 ## 다음 통합 작업
 
-우선순위는 `실제 ERC-8004 reference deployment → Ethereum owner 서명/등록 경로 → PostgreSQL 통합 테스트 → 프로세스별 OS/컨테이너 격리 → 외부 표준 호환 벡터 및 브라우저 E2E`입니다. `integrations/README.md`, `contracts/README.md`, `docs/threat-model/threat-model.md`에 필요한 작업을 분리했습니다.
+우선순위는 `MetaMask에서 실제 두 트랜잭션 승인 및 Pages 최종 문서 배포 → PostgreSQL 통합 테스트 → 프로세스별 OS/컨테이너 격리 → 외부 표준 호환 벡터 및 브라우저 E2E`입니다. `integrations/README.md`, `contracts/README.md`, `docs/threat-model/threat-model.md`에 필요한 작업을 분리했습니다.

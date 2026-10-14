@@ -7,7 +7,7 @@ import {aggregate} from './config.ts';
 import {skipped} from './module.ts';
 import {ensure,VerificationFailure,SourceUnavailable} from './errors.ts';
 import {MODULE_IDS} from '../shared-schemas/types.ts';
-import type {Presentation,Transport,TrustStore,AuthenticationResult,Challenge,ModuleId,Purchase,Configuration,RegistrySnapshot,CompanyAttestation} from '../shared-schemas/types.ts';
+import type {Presentation,Transport,TrustStore,AuthenticationResult,Challenge,ModuleId,Purchase,Configuration,RegistrySnapshot,CompanyAttestation,Profile} from '../shared-schemas/types.ts';
 import {validate,parseJsonStrict,presentationSchema,challengeRequestSchema,purchaseSchema,MOCK_PATH} from '../shared-schemas/index.ts';
 import type {Fetcher} from '../network/safe-fetch.ts';
 import type {Store} from '../storage/store.ts';
@@ -18,7 +18,7 @@ import {apsFilter} from '../aps-passport-filter/index.ts';
 import {companyFilter,checkCompanyStatus} from '../company-filter/index.ts';
 import {tapFilter} from '../visa-tap-filter/index.ts';
 import {verifyHttp} from '../visa-tap-filter/http-signatures.ts';
-export interface EngineOptions {store:Store;fetcher:Fetcher;registryReader:RegistryReader;trust:TrustStore;ticketKey:KeyPair;audience:string;chainId:number;registryAddress:string;development:boolean;now?:()=>number}
+export interface EngineOptions {store:Store;fetcher:Fetcher;registryReader:RegistryReader;trust:TrustStore;ticketKey:KeyPair;audience:string;chainId:number;registryAddress:string;development:boolean;assuranceProfile?:Profile;now?:()=>number}
 export interface TicketClaims {
  iss:string;sub:string;aud:string;iat:number;exp:number;jti:string;traceId:string;
  subjectAgent:Presentation['claimedIdentity'];assuranceProfile:string;policyProfile:string;
@@ -73,7 +73,7 @@ export class Verifier {
    if(configuration.mode==='failFast'&&mod.required&&r.status==='FAIL')stopped=true;
   }
   const decision=aggregate(configuration,context.results);
-  const result:AuthenticationResult={traceId,...decision,assuranceProfile:o.development?'DEVELOPMENT_MINIMAL':decision.policyProfile,development:o.development,enabledModules:MODULE_IDS.filter(id=>configuration.modules[id].enabled),skippedModules:context.results.filter(r=>r.status==='SKIP').map(r=>r.moduleId),evidenceBundleHash:hash(context.results.map(r=>r.outputHash)),modules:context.results};
+  const result:AuthenticationResult={traceId,...decision,assuranceProfile:o.assuranceProfile??(o.development?'DEVELOPMENT_MINIMAL':decision.policyProfile),development:o.development,enabledModules:MODULE_IDS.filter(id=>configuration.modules[id].enabled),skippedModules:context.results.filter(r=>r.status==='SKIP').map(r=>r.moduleId),evidenceBundleHash:hash(context.results.map(r=>r.outputHash)),modules:context.results};
   if(!envelopeGood){result.verdict='REJECT';result.reasonCodes=['BUNDLE_HASH_MISMATCH'];}
   if(result.verdict==='VERIFIED'){
    try{

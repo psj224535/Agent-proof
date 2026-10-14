@@ -1,0 +1,15 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "PM",
+  "description": "Pending Sepolia registration; run npm run start:sepolia to create the final document.",
+  "image": "https://psj224535.github.io/Agent-proof/pm-logo.svg",
+  "active": false,
+  "services": [
+    {"name": "web", "endpoint": "https://psj224535.github.io/Agent-proof/"},
+    {"name": "A2A", "endpoint": "https://psj224535.github.io/Agent-proof/.well-known/agent-card.json", "version": "1.0"}
+  ],
+  "x402Support": false,
+  "registrations": [{"agentId": 0, "agentRegistry": "eip155:11155111:0x8004A818BFB912233c491871b3d84c89A494BD9e"}],
+  "supportedTrust": ["crypto-economic"],
+  "agentproof": {"runtimeBindingHash": "0000000000000000000000000000000000000000000000000000000000000000", "runtimeEndpoint": "https://psj224535.github.io/Agent-proof/a2a"}
+}
