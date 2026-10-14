@@ -43,6 +43,8 @@ Open repository **Settings → Pages → Build and deployment → Source**, choo
 
 The backend accepts a transaction only if its chain, sender, target, zero ETH value, and full calldata exactly match what it prepared. It also verifies the `Registered` event and reads the stored metadata back at the receipt block.
 
+The backend will not prepare the first transaction until the public HTTPS `agentURI` returns the expected PM placeholder document. This prevents accidentally anchoring a 404 or unrelated page.
+
 ## Publish the final documents
 
 Registration confirmation writes the final files locally:
