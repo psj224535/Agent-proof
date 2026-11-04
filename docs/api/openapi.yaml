@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "AgentProof local authentication API",
-    "version": "0.1.0",
-    "description": "DEVELOPMENT SIMULATION ONLY. Primary Agent/verifier APIs. Runtime request schemas are reused; response schemas and auxiliary registry/issuer internal APIs are not fully described. Native JSON Schema validator, not Zod."
+    "title": "AgentProof authentication and Sepolia trading API",
+    "version": "0.2.0",
+    "description": "Native local simulator plus separate real Sepolia testnet trading path. Primary Agent/verifier APIs. Runtime request schemas are reused; response schemas and auxiliary registry/issuer internal APIs are not fully described. Native JSON Schema validator, not Zod."
   },
   "paths": {
     "/api/v1/challenges": {
@@ -879,6 +879,1597 @@
         },
         "parameters": []
       }
+    },
+    "/api/trading/readiness": {
+      "get": {
+        "summary": "Read RPC-backed readiness and execution wallet address/balance",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "wallet",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[0-9a-fA-F]{40}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/trading/assets": {
+      "get": {
+        "summary": "Read active/inactive onchain listings",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/trading/policy/{wallet}": {
+      "get": {
+        "summary": "Read and hash authoritative onchain policy",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "wallet",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/trading/intent": {
+      "post": {
+        "summary": "Parse bounded goal and select highest permitted synthetic demoScore",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "goal": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "buyerWallet": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "spendWei": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,77})$"
+                  }
+                },
+                "required": [
+                  "goal",
+                  "buyerWallet"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/policy/prepare": {
+      "post": {
+        "summary": "Prepare exact zero-key MetaMask budget/policy calldata",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "preparationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "transaction": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "chainId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "data",
+                        "value",
+                        "chainId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "preparationId",
+                    "label",
+                    "transaction"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "wallet": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "action": {
+                    "enum": [
+                      "configure",
+                      "deposit",
+                      "withdraw",
+                      "allow-token",
+                      "pause",
+                      "revoke"
+                    ]
+                  },
+                  "buyEnabled": {
+                    "type": "boolean"
+                  },
+                  "maxPerTradeWei": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,77})$"
+                  },
+                  "autoApproveLimitWei": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,77})$"
+                  },
+                  "totalBudgetLimitWei": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,77})$"
+                  },
+                  "validUntil": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]{0,77})$"
+                      },
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    ]
+                  },
+                  "token": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "amountWei": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,77})$"
+                  }
+                },
+                "required": [
+                  "wallet",
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/policy/confirm": {
+      "post": {
+        "summary": "Verify RPC transaction calldata, sender, receipt and canonical block",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preparationId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "transactionHash": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{64}$"
+                  }
+                },
+                "required": [
+                  "preparationId",
+                  "transactionHash"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/binding/prepare": {
+      "post": {
+        "summary": "Prepare owner-only execution wallet metadata; update same signed public card locally",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "preparationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "transaction": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "chainId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "data",
+                        "value",
+                        "chainId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "preparationId",
+                    "label",
+                    "transaction"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "wallet": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  }
+                },
+                "required": [
+                  "wallet"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/authenticate": {
+      "post": {
+        "summary": "Run existing ERC-8004→A2A→APS→Company→TAP filters on signed trade",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": [
+                  "traceId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/authorize": {
+      "post": {
+        "summary": "Obtain deterministic ALLOW/ASK/DENY from independent verifier",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": [
+                  "traceId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Browser→Agent body is {traceId}. Agent→Verifier at port3101 uses {intent,traceId,humanSignature?} with Bearer trade ticket and strict Ed25519 HTTP signature. The browser never supplies Authentication verdict, policy, evidence or verifier signature."
+      }
+    },
+    "/api/trading/human-approval/challenge": {
+      "post": {
+        "summary": "Get frozen exact-action buyer EIP-712 typed data",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": [
+                  "traceId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/human-approval/confirm": {
+      "post": {
+        "summary": "Verify buyer signature and recheck identity/policy/price/budget",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "signature": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{130}$"
+                  }
+                },
+                "required": [
+                  "traceId",
+                  "signature"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/execution-authorization": {
+      "post": {
+        "summary": "Issue short-lived nonce-unique verifier signature only after VERIFIED+ALLOW",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": [
+                  "traceId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Browser→Agent body is {traceId}. Agent→Verifier at port3101 uses {intent,traceId,humanSignature?} with Bearer trade ticket and strict Ed25519 HTTP signature. The browser never supplies Authentication verdict, policy, evidence or verifier signature."
+      }
+    },
+    "/api/trading/execute": {
+      "post": {
+        "summary": "Preflight, simulate, gas check, executor signing and actual purchase",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": [
+                  "traceId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/reconcile": {
+      "post": {
+        "summary": "Recheck persisted transaction hash after uncertain RPC response; never blindly rebroadcast",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": [
+                  "traceId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trading/executions/{traceId}": {
+      "get": {
+        "summary": "Read public live modules, execution stages and receipt/balance evidence",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "traceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/trading/audit/{traceId}": {
+      "get": {
+        "summary": "Read sanitized trade audit chain linked to authentication evidence",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3100"
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "traceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/trading/verifier": {
+      "get": {
+        "summary": "Get signing-only verifier public address",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3101"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/trading/progress/{requestId}": {
+      "get": {
+        "summary": "Read actual module progress (no tickets or private keys)",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3101"
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/trading/execution-result": {
+      "post": {
+        "summary": "Re-fetch and validate receipt/event then link original authentication audit chain",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3101"
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Signature",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Signature-Input",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Content-Digest",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [
+          {
+            "authenticationTicket": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "transactionHash": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{64}$"
+                  }
+                },
+                "required": [
+                  "traceId",
+                  "transactionHash"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Server-to-server only: single-use VERIFIED trade ticket plus Ed25519 runtime HTTP proof. Exact original intent; fresh independent identity, policy, price and balance reads. Never pass the ticket or signature through browser UI."
+      }
+    },
+    "/api/trading/preflight": {
+      "post": {
+        "summary": "Revalidate issued authorization immediately before submission",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3101"
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Signature",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Signature-Input",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Content-Digest",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [
+          {
+            "authenticationTicket": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "const": "agentproof-trade-v1"
+                      },
+                      "chainId": {
+                        "enum": [
+                          31337,
+                          11155111
+                        ]
+                      },
+                      "exchangeContract": {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-fA-F]{40}$"
+                      },
+                      "buyerWallet": {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-fA-F]{40}$"
+                      },
+                      "agentIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          "registry": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 2048
+                          },
+                          "agentId": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,14})$"
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "registry",
+                          "agentId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "executionWallet": {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-fA-F]{40}$"
+                      },
+                      "action": {
+                        "const": "BUY"
+                      },
+                      "token": {
+                        "type": "string",
+                        "pattern": "^0x[0-9a-fA-F]{40}$"
+                      },
+                      "quantity": {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]{0,77}$"
+                      },
+                      "maxTotalCostWei": {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]{0,77}$"
+                      },
+                      "merchant": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      "purpose": {
+                        "const": "payment"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                      },
+                      "nonce": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{32}$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "chainId",
+                      "exchangeContract",
+                      "buyerWallet",
+                      "agentIdentity",
+                      "executionWallet",
+                      "action",
+                      "token",
+                      "quantity",
+                      "maxTotalCostWei",
+                      "merchant",
+                      "purpose",
+                      "createdAt",
+                      "expiresAt",
+                      "nonce"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "traceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "humanSignature": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{130}$"
+                  }
+                },
+                "required": [
+                  "intent",
+                  "traceId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Server-to-server only: single-use VERIFIED trade ticket plus Ed25519 runtime HTTP proof. Exact original intent; fresh independent identity, policy, price and balance reads. Never pass the ticket or signature through browser UI."
+      }
+    },
+    "/api/exchange/config": {
+      "get": {
+        "summary": "Deployment and public configuration",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3200"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/exchange/listings": {
+      "get": {
+        "summary": "Onchain listings and inventory",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3200"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/exchange/trades": {
+      "get": {
+        "summary": "Recent onchain purchase logs (up to 5000 blocks)",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3200"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/exchange/deployment/prepare": {
+      "post": {
+        "summary": "Prepare merchant MetaMask deployment or listing registration",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3200"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "preparationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "transaction": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "chainId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "data",
+                        "value",
+                        "chainId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "preparationId",
+                    "label",
+                    "transaction"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "exchange",
+                      "token",
+                      "listing"
+                    ]
+                  },
+                  "wallet": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "tokenIndex": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2
+                  }
+                },
+                "required": [
+                  "kind",
+                  "wallet"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exchange/deployment/confirm": {
+      "post": {
+        "summary": "Confirm prepared deployment/admin transaction from RPC",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3200"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success."
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preparationId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "transactionHash": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{64}$"
+                  }
+                },
+                "required": [
+                  "preparationId",
+                  "transactionHash"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exchange/admin/prepare": {
+      "post": {
+        "summary": "Prepare owner-only administration calldata",
+        "servers": [
+          {
+            "url": "http://127.0.0.1:3200"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Actual observed result; inspect verdict/status. No synthetic success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "preparationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "transaction": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "data": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        },
+                        "chainId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2048
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "data",
+                        "value",
+                        "chainId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "preparationId",
+                    "label",
+                    "transaction"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Schema, policy, signature, state or chain validation failed. No purchase broadcast for preflight failure."
+          },
+          "500": {
+            "description": "Safe internal error. If a transaction hash is present, reconcile rather than resubmit."
+          },
+          "503": {
+            "description": "RPC/source unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "wallet": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "action": {
+                    "enum": [
+                      "update-listing",
+                      "approve-inventory",
+                      "deposit-inventory",
+                      "withdraw-proceeds",
+                      "set-verifier",
+                      "pause",
+                      "unpause"
+                    ]
+                  },
+                  "token": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "pricePerTokenWei": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,77})$"
+                  },
+                  "demoScore": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "amountWei": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,77})$"
+                  },
+                  "verifier": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  }
+                },
+                "required": [
+                  "wallet",
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1048,14 +2639,156 @@
                       "type": "boolean"
                     },
                     "params": {
-                      "type": "object",
-                      "properties": {
-                        "subjectAgent": {
+                      "anyOf": [
+                        {
                           "type": "object",
                           "properties": {
+                            "subjectAgent": {
+                              "type": "object",
+                              "properties": {
+                                "chainId": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "registry": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "agentId": {
+                                  "type": "string",
+                                  "pattern": "^(0|[1-9][0-9]{0,14})$"
+                                }
+                              },
+                              "required": [
+                                "chainId",
+                                "registry",
+                                "agentId"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "ownerWallet": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "runtimeKeyId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "publicKeyMultibase": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "apsAgentId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "endpoint": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "programVersion": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "issuedAt": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                            },
+                            "expiresAt": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                            }
+                          },
+                          "required": [
+                            "subjectAgent",
+                            "ownerWallet",
+                            "runtimeKeyId",
+                            "publicKeyMultibase",
+                            "apsAgentId",
+                            "endpoint",
+                            "programVersion",
+                            "issuedAt",
+                            "expiresAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "subjectAgent": {
+                              "type": "object",
+                              "properties": {
+                                "chainId": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "registry": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "agentId": {
+                                  "type": "string",
+                                  "pattern": "^(0|[1-9][0-9]{0,14})$"
+                                }
+                              },
+                              "required": [
+                                "chainId",
+                                "registry",
+                                "agentId"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "ownerWallet": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "runtimeKeyId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "publicKeyMultibase": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "apsAgentId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "endpoint": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "programVersion": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "issuedAt": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                            },
+                            "expiresAt": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                            },
                             "chainId": {
-                              "type": "integer",
-                              "minimum": 1
+                              "enum": [
+                                31337,
+                                11155111
+                              ]
                             },
                             "registry": {
                               "type": "string",
@@ -1064,67 +2797,40 @@
                             },
                             "agentId": {
                               "type": "string",
-                              "pattern": "^(0|[1-9][0-9]{0,14})$"
+                              "minLength": 1,
+                              "maxLength": 2048
+                            },
+                            "executionWallet": {
+                              "type": "string",
+                              "pattern": "^0x[0-9a-fA-F]{40}$"
+                            },
+                            "metadataKey": {
+                              "const": "agentproof.executionWallet.v1"
+                            },
+                            "encoding": {
+                              "const": "abi.encode(address)"
                             }
                           },
                           "required": [
+                            "subjectAgent",
+                            "ownerWallet",
+                            "runtimeKeyId",
+                            "publicKeyMultibase",
+                            "apsAgentId",
+                            "endpoint",
+                            "programVersion",
+                            "issuedAt",
+                            "expiresAt",
                             "chainId",
                             "registry",
-                            "agentId"
+                            "agentId",
+                            "executionWallet",
+                            "metadataKey",
+                            "encoding"
                           ],
                           "additionalProperties": false
-                        },
-                        "ownerWallet": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 2048
-                        },
-                        "runtimeKeyId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 2048
-                        },
-                        "publicKeyMultibase": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 2048
-                        },
-                        "apsAgentId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 2048
-                        },
-                        "endpoint": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 2048
-                        },
-                        "programVersion": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 2048
-                        },
-                        "issuedAt": {
-                          "type": "string",
-                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
-                        },
-                        "expiresAt": {
-                          "type": "string",
-                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
                         }
-                      },
-                      "required": [
-                        "subjectAgent",
-                        "ownerWallet",
-                        "runtimeKeyId",
-                        "publicKeyMultibase",
-                        "apsAgentId",
-                        "endpoint",
-                        "programVersion",
-                        "issuedAt",
-                        "expiresAt"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
@@ -1735,14 +3441,156 @@
                           "type": "boolean"
                         },
                         "params": {
-                          "type": "object",
-                          "properties": {
-                            "subjectAgent": {
+                          "anyOf": [
+                            {
                               "type": "object",
                               "properties": {
+                                "subjectAgent": {
+                                  "type": "object",
+                                  "properties": {
+                                    "chainId": {
+                                      "type": "integer",
+                                      "minimum": 1
+                                    },
+                                    "registry": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 2048
+                                    },
+                                    "agentId": {
+                                      "type": "string",
+                                      "pattern": "^(0|[1-9][0-9]{0,14})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "chainId",
+                                    "registry",
+                                    "agentId"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "ownerWallet": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "runtimeKeyId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "publicKeyMultibase": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "apsAgentId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "endpoint": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "programVersion": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "issuedAt": {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                                },
+                                "expiresAt": {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                                }
+                              },
+                              "required": [
+                                "subjectAgent",
+                                "ownerWallet",
+                                "runtimeKeyId",
+                                "publicKeyMultibase",
+                                "apsAgentId",
+                                "endpoint",
+                                "programVersion",
+                                "issuedAt",
+                                "expiresAt"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "subjectAgent": {
+                                  "type": "object",
+                                  "properties": {
+                                    "chainId": {
+                                      "type": "integer",
+                                      "minimum": 1
+                                    },
+                                    "registry": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 2048
+                                    },
+                                    "agentId": {
+                                      "type": "string",
+                                      "pattern": "^(0|[1-9][0-9]{0,14})$"
+                                    }
+                                  },
+                                  "required": [
+                                    "chainId",
+                                    "registry",
+                                    "agentId"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "ownerWallet": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "runtimeKeyId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "publicKeyMultibase": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "apsAgentId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "endpoint": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "programVersion": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "issuedAt": {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                                },
+                                "expiresAt": {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                                },
                                 "chainId": {
-                                  "type": "integer",
-                                  "minimum": 1
+                                  "enum": [
+                                    31337,
+                                    11155111
+                                  ]
                                 },
                                 "registry": {
                                   "type": "string",
@@ -1751,67 +3599,40 @@
                                 },
                                 "agentId": {
                                   "type": "string",
-                                  "pattern": "^(0|[1-9][0-9]{0,14})$"
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "executionWallet": {
+                                  "type": "string",
+                                  "pattern": "^0x[0-9a-fA-F]{40}$"
+                                },
+                                "metadataKey": {
+                                  "const": "agentproof.executionWallet.v1"
+                                },
+                                "encoding": {
+                                  "const": "abi.encode(address)"
                                 }
                               },
                               "required": [
+                                "subjectAgent",
+                                "ownerWallet",
+                                "runtimeKeyId",
+                                "publicKeyMultibase",
+                                "apsAgentId",
+                                "endpoint",
+                                "programVersion",
+                                "issuedAt",
+                                "expiresAt",
                                 "chainId",
                                 "registry",
-                                "agentId"
+                                "agentId",
+                                "executionWallet",
+                                "metadataKey",
+                                "encoding"
                               ],
                               "additionalProperties": false
-                            },
-                            "ownerWallet": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 2048
-                            },
-                            "runtimeKeyId": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 2048
-                            },
-                            "publicKeyMultibase": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 2048
-                            },
-                            "apsAgentId": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 2048
-                            },
-                            "endpoint": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 2048
-                            },
-                            "programVersion": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 2048
-                            },
-                            "issuedAt": {
-                              "type": "string",
-                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
-                            },
-                            "expiresAt": {
-                              "type": "string",
-                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
                             }
-                          },
-                          "required": [
-                            "subjectAgent",
-                            "ownerWallet",
-                            "runtimeKeyId",
-                            "publicKeyMultibase",
-                            "apsAgentId",
-                            "endpoint",
-                            "programVersion",
-                            "issuedAt",
-                            "expiresAt"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
@@ -2201,61 +4022,168 @@
             "additionalProperties": false
           },
           "tapRequest": {
-            "type": "object",
-            "properties": {
-              "merchant": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 2048
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "merchant": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "purpose": {
+                    "enum": [
+                      "payment",
+                      "browsing"
+                    ]
+                  },
+                  "productId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "currency": {
+                    "const": "KRW"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{32}$"
+                  }
+                },
+                "required": [
+                  "merchant",
+                  "purpose",
+                  "productId",
+                  "amount",
+                  "currency",
+                  "quantity",
+                  "createdAt",
+                  "expiresAt",
+                  "nonce"
+                ],
+                "additionalProperties": false
               },
-              "purpose": {
-                "enum": [
-                  "payment",
-                  "browsing"
-                ]
-              },
-              "productId": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 2048
-              },
-              "amount": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "currency": {
-                "const": "KRW"
-              },
-              "quantity": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 100000
-              },
-              "createdAt": {
-                "type": "string",
-                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
-              },
-              "expiresAt": {
-                "type": "string",
-                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
-              },
-              "nonce": {
-                "type": "string",
-                "pattern": "^[0-9a-f]{32}$"
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "const": "agentproof-trade-v1"
+                  },
+                  "chainId": {
+                    "enum": [
+                      31337,
+                      11155111
+                    ]
+                  },
+                  "exchangeContract": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "buyerWallet": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "agentIdentity": {
+                    "type": "object",
+                    "properties": {
+                      "chainId": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "registry": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      "agentId": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]{0,14})$"
+                      }
+                    },
+                    "required": [
+                      "chainId",
+                      "registry",
+                      "agentId"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "executionWallet": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "action": {
+                    "const": "BUY"
+                  },
+                  "token": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "quantity": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]{0,77}$"
+                  },
+                  "maxTotalCostWei": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]{0,77}$"
+                  },
+                  "merchant": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  },
+                  "purpose": {
+                    "const": "payment"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{32}$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "chainId",
+                  "exchangeContract",
+                  "buyerWallet",
+                  "agentIdentity",
+                  "executionWallet",
+                  "action",
+                  "token",
+                  "quantity",
+                  "maxTotalCostWei",
+                  "merchant",
+                  "purpose",
+                  "createdAt",
+                  "expiresAt",
+                  "nonce"
+                ],
+                "additionalProperties": false
               }
-            },
-            "required": [
-              "merchant",
-              "purpose",
-              "productId",
-              "amount",
-              "currency",
-              "quantity",
-              "createdAt",
-              "expiresAt",
-              "nonce"
-            ],
-            "additionalProperties": false
+            ]
           },
           "submittedAt": {
             "type": "string",
@@ -2407,6 +4335,9 @@
             "minItems": 1,
             "maxItems": 128
           },
+          "x402Support": {
+            "type": "boolean"
+          },
           "registrations": {
             "type": "array",
             "items": {
@@ -2429,6 +4360,16 @@
               "additionalProperties": false
             },
             "minItems": 1,
+            "maxItems": 128
+          },
+          "supportedTrust": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "minItems": 0,
             "maxItems": 128
           },
           "agentproof": {
@@ -2458,6 +4399,7 @@
           "image",
           "active",
           "services",
+          "x402Support",
           "registrations",
           "agentproof"
         ],
@@ -2470,6 +4412,451 @@
       "timeSchema": {
         "type": "string",
         "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+      },
+      "tradeRequestSchema": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "const": "agentproof-trade-v1"
+          },
+          "chainId": {
+            "enum": [
+              31337,
+              11155111
+            ]
+          },
+          "exchangeContract": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "buyerWallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "agentIdentity": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "registry": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              "agentId": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,14})$"
+              }
+            },
+            "required": [
+              "chainId",
+              "registry",
+              "agentId"
+            ],
+            "additionalProperties": false
+          },
+          "executionWallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "action": {
+            "const": "BUY"
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "quantity": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,77}$"
+          },
+          "maxTotalCostWei": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,77}$"
+          },
+          "merchant": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "purpose": {
+            "const": "payment"
+          },
+          "createdAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "nonce": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        },
+        "required": [
+          "version",
+          "chainId",
+          "exchangeContract",
+          "buyerWallet",
+          "agentIdentity",
+          "executionWallet",
+          "action",
+          "token",
+          "quantity",
+          "maxTotalCostWei",
+          "merchant",
+          "purpose",
+          "createdAt",
+          "expiresAt",
+          "nonce"
+        ],
+        "additionalProperties": false
+      },
+      "addressSchema": {
+        "type": "string",
+        "pattern": "^0x[0-9a-fA-F]{40}$"
+      },
+      "bytes32Schema": {
+        "type": "string",
+        "pattern": "^0x[0-9a-fA-F]{64}$"
+      },
+      "executionAuthorizationSchema": {
+        "type": "object",
+        "properties": {
+          "registry": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "agentId": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "agentOwner": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "executionWallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "buyer": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "quantity": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "maxTotalCostWei": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "policyVersion": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "evidenceHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{64}$"
+          },
+          "traceId": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{64}$"
+          },
+          "issuedAt": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          }
+        },
+        "required": [
+          "registry",
+          "agentId",
+          "agentOwner",
+          "executionWallet",
+          "buyer",
+          "token",
+          "quantity",
+          "maxTotalCostWei",
+          "policyVersion",
+          "evidenceHash",
+          "traceId",
+          "nonce",
+          "issuedAt",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "onchainTradeIntentSchema": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "const": "agentproof-trade-v1"
+          },
+          "chainId": {
+            "enum": [
+              31337,
+              11155111
+            ]
+          },
+          "exchangeContract": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "buyerWallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "agentIdentity": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "enum": [
+                  31337,
+                  11155111
+                ]
+              },
+              "registry": {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              },
+              "agentId": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,77})$"
+              }
+            },
+            "required": [
+              "chainId",
+              "registry",
+              "agentId"
+            ],
+            "additionalProperties": false
+          },
+          "executionWallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "action": {
+            "const": "BUY"
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "quantity": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "maxTotalCostWei": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "merchant": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "purpose": {
+            "const": "payment"
+          },
+          "createdAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "nonce": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        },
+        "required": [
+          "version",
+          "chainId",
+          "exchangeContract",
+          "buyerWallet",
+          "agentIdentity",
+          "executionWallet",
+          "action",
+          "token",
+          "quantity",
+          "maxTotalCostWei",
+          "merchant",
+          "purpose",
+          "createdAt",
+          "expiresAt",
+          "nonce"
+        ],
+        "additionalProperties": false
+      },
+      "testChainSchema": {
+        "enum": [
+          31337,
+          11155111
+        ]
+      },
+      "tradeIdentitySchema": {
+        "type": "object",
+        "properties": {
+          "chainId": {
+            "enum": [
+              31337,
+              11155111
+            ]
+          },
+          "registry": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "agentId": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          }
+        },
+        "required": [
+          "chainId",
+          "registry",
+          "agentId"
+        ],
+        "additionalProperties": false
+      },
+      "tradePolicySchema": {
+        "type": "object",
+        "properties": {
+          "policyVersion": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "userWallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "agentIdentity": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "enum": [
+                  31337,
+                  11155111
+                ]
+              },
+              "registry": {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              },
+              "agentId": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,77})$"
+              }
+            },
+            "required": [
+              "chainId",
+              "registry",
+              "agentId"
+            ],
+            "additionalProperties": false
+          },
+          "executionWallet": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "allowedExchange": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "allowedChainId": {
+            "enum": [
+              31337,
+              11155111
+            ]
+          },
+          "allowedTokens": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^0x[0-9a-fA-F]{40}$"
+            },
+            "maxItems": 128
+          },
+          "buyEnabled": {
+            "type": "boolean"
+          },
+          "maxPerTradeWei": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "autoApproveLimitWei": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "totalBudgetWei": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "spentWei": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,77})$"
+          },
+          "validFrom": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "policyHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{64}$"
+          }
+        },
+        "required": [
+          "policyVersion",
+          "userWallet",
+          "agentIdentity",
+          "executionWallet",
+          "allowedExchange",
+          "allowedChainId",
+          "allowedTokens",
+          "buyEnabled",
+          "maxPerTradeWei",
+          "autoApproveLimitWei",
+          "totalBudgetWei",
+          "spentWei",
+          "validFrom",
+          "expiresAt",
+          "active",
+          "revoked",
+          "policyHash"
+        ],
+        "additionalProperties": false
+      },
+      "uintSchema": {
+        "type": "string",
+        "pattern": "^(0|[1-9][0-9]{0,77})$"
       }
     },
     "securitySchemes": {

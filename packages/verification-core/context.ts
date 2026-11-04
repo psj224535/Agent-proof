@@ -4,7 +4,7 @@ import type {Store} from '../storage/store.ts';
 import type {SignatureParameters} from '../visa-tap-filter/http-signatures.ts';
 export interface RegistryReader {read(identity:Presentation['claimedIdentity'],signal?:AbortSignal):Promise<RegistrySnapshot|null>}
 export interface Context {
- bundle:Presentation;transport:Transport;configuration:Configuration;
+ bundle:Presentation<any>;transport:Transport;configuration:Configuration;
  store:Store;fetcher:Fetcher;registryReader:RegistryReader;trust:TrustStore;
  chainId:number;registryAddress:string;audience:string;allowedVersions:string[];
  now:number;traceId:string;signal:AbortSignal;evidence:Record<string,unknown>;

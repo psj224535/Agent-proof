@@ -17,6 +17,13 @@
     "typecheck": "node tools/typecheck/node_modules/typescript/bin/tsc --noEmit --typeRoots tools/typecheck/node_modules/@types",
     "check:sepolia": "node --experimental-strip-types scripts/check-sepolia.ts",
     "docs:api": "node --experimental-strip-types scripts/generate-openapi.ts",
-    "manifest": "node --experimental-strip-types scripts/generate-manifest.ts"
+    "manifest": "node --experimental-strip-types scripts/generate-manifest.ts",
+    "contracts:build": "node --experimental-strip-types scripts/contracts-build.ts",
+    "contracts:test": "forge test --root contracts -v",
+    "start:trade-demo": "node --experimental-strip-types scripts/trade-demo.ts",
+    "test:trade": "node --experimental-strip-types --test tests/trading*.test.ts && node --experimental-strip-types scripts/trade-service-e2e.ts && node --experimental-strip-types scripts/exchange-service-e2e.ts",
+    "check:trade-sepolia": "node --experimental-strip-types scripts/check-trade-sepolia.ts",
+    "verify:trade-sepolia": "node --experimental-strip-types scripts/verify-trade-sepolia.ts",
+    "test:exchange:service": "node --experimental-strip-types scripts/exchange-service-e2e.ts"
   }
 }

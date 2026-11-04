@@ -18,7 +18,7 @@ export function a2aFilter(config:ModuleConfig){return makeModule('a2a','A2A Agen
  c.evidence.presentedHash=hash(presented);c.evidence.fetchedHash=hash(card);
  ensure(hash(presented)===hash(card),'AGENT_CARD_HASH_MISMATCH');
  const ext=card.capabilities.extensions.filter(e=>e.uri===EXTENSION_URI);ensure(ext.length===1&&ext[0].required,'RUNTIME_EXTENSION_MISSING');
- const b=ext[0].params;c.evidence.runtimeBinding=b;
+ const b=ext[0].params as import('../shared-schemas/types.ts').RuntimeBinding;c.evidence.runtimeBinding=b;
  ensure(identityEquals(b.subjectAgent,c.bundle.claimedIdentity),'CARD_AGENT_ID_MISMATCH');
  ensure(b.ownerWallet.toLowerCase()===c.snapshot.owner.toLowerCase(),'CURRENT_OWNER_MISMATCH');
  ensure(hash(b)===c.snapshot.runtimeBindingHash,'CURRENT_RUNTIME_BINDING_MISMATCH');
