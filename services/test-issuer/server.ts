@@ -1,3 +1,5 @@
+import {createViemRegistryReader} from '../../packages/erc8004-filter/viem-reader.ts';
+import {SEPOLIA_CHAIN_ID,SEPOLIA_REGISTRY,SEPOLIA_PROXY_CODE_HASH,SEPOLIA_IMPLEMENTATION_CODE_HASH,SEPOLIA_ABI_VERSION} from '../../packages/erc8004-filter/sepolia.ts';
 import {join} from 'node:path';import {SQLite} from '../../packages/storage/sql.ts';
 import {serve,stateDir,loadKey,reply,jsonRequest} from '../common/http.ts';
 import {validate,obj,S,bindingSchema,signatureSchema} from '../../packages/shared-schemas/index.ts';
@@ -7,13 +9,14 @@ export async function startIssuer(){
  ensure(process.env.AGENTPROOF_DEVELOPMENT==='true','TEST_ISSUER_REQUIRES_DEVELOPMENT');
  const dir=stateDir('issuer'),key=loadKey(join(dir,'key.json'));const sql=new SQLite(join(dir,'issuer.sqlite'));await sql.all('CREATE TABLE IF NOT EXISTS attestations(id TEXT PRIMARY KEY,body TEXT NOT NULL,status TEXT NOT NULL,key TEXT NOT NULL)');
  const origin=process.env.ISSUER_ORIGIN??'http://127.0.0.1:3003';const registry=process.env.REGISTRY_ORIGIN??'http://127.0.0.1:3002';
+ const reader=process.env.TRADING_ENABLED==='true'?createViemRegistryReader({rpcUrl:process.env.SEPOLIA_RPC_URL!,chainId:SEPOLIA_CHAIN_ID,registry:SEPOLIA_REGISTRY,proxyCodeHash:SEPOLIA_PROXY_CODE_HASH,implementationCodeHash:SEPOLIA_IMPLEMENTATION_CODE_HASH,abiVersion:SEPOLIA_ABI_VERSION}):null;
  const server=await serve(Number(process.env.ISSUER_PORT??3003),async r=>{
   if(r.method==='GET'&&r.path==='/health'){reply(r.res,200,{ok:true,testIssuer:true});return;}
   if(r.method==='GET'&&r.path==='/public-key'){reply(r.res,200,{issuer:TEST_ISSUER,publicKeyMultibase:key.publicKeyMultibase,testIssuer:true});return;}
   if(r.method==='POST'&&r.path==='/attest'){
    const v=validate<any>(obj({binding:bindingSchema,signature:signatureSchema}),r.json);const b=v.binding;
    ensure(verifyObject(b.publicKeyMultibase,'AGENTPROOF-TEST-ATTEST-REQUEST-V1',b,v.signature),'ISSUER_REQUEST_SIGNATURE_INVALID');
-   const s=await jsonRequest(registry,'/agents/'+b.subjectAgent.agentId);ensure(s&&s.runtimeBindingHash===hash(b)&&s.owner===b.ownerWallet,'ISSUER_CURRENT_BINDING_MISMATCH');
+   const s=reader?await reader.read(b.subjectAgent):await jsonRequest(registry,'/agents/'+b.subjectAgent.agentId);ensure(s&&s.runtimeBindingHash===hash(b)&&s.owner.toLowerCase()===b.ownerWallet.toLowerCase(),'ISSUER_CURRENT_BINDING_MISMATCH');
    const a=createAttestation({identity:b.subjectAgent,binding:b} as any,key,origin);
    await sql.all('INSERT INTO attestations(id,body,status,key) VALUES(?,?,?,?)',[a.attestationId,JSON.stringify(a),'ACTIVE',b.publicKeyMultibase]);reply(r.res,200,a);return;
   }

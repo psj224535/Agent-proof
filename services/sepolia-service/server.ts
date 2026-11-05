@@ -1,3 +1,5 @@
+import {createTradingBackend} from '../../packages/trading/backend.ts';
+import {TradingChain} from '../common/trading-chain.ts';
 import {existsSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {serve,stateDir,saveJson,reply,staticFile,jsonRequest} from '../common/http.ts';
@@ -55,7 +57,9 @@ export async function startSepoliaAgent(){
   if(result.ticket)protectedResult=await send(protectedTransport(p,result.ticket,d.key,audience));return {presentation:p,result,protectedResult,traceUrl:verifierOrigin+'/?trace='+result.traceId};
  }
  function serialized<T>(f:()=>Promise<T>):Promise<T>{const task=queue.then(f);queue=task.then(()=>undefined,()=>undefined);return task;}
+ const trading=process.env.TRADING_ENABLED==='true'?createTradingBackend({chain:new TradingChain({rpcUrl}),dir,verifierOrigin,getDocuments:()=>state?.documents,save,publish}):null;
  const server=await serve(Number(process.env.SEPOLIA_AGENT_PORT??3100),async r=>{
+  if(trading&&await trading.handle(r))return;
   if(staticFile(r,'sepolia-console'))return;
   if(r.method==='GET'&&r.path==='/health'){reply(r.res,200,{ok:true,network:'sepolia',deployment});return;}
   if(r.method==='GET'&&r.path==='/api/public/config'){reply(r.res,200,{network:'sepolia',chainId:SEPOLIA_CHAIN_ID,chainHex:SEPOLIA_CHAIN_HEX,registry:SEPOLIA_REGISTRY,owner,agentURI,cardURI,pagesOrigin,verifierOrigin,etherscanRegistry:'https://sepolia.etherscan.io/address/'+SEPOLIA_REGISTRY,erc8004scan:'https://www.8004scan.io/agents?network=sepolia'});return;}

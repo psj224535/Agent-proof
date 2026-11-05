@@ -11,11 +11,12 @@ export interface RuntimeBinding {
   publicKeyMultibase: string; apsAgentId: string; endpoint: string;
   programVersion: string; issuedAt: string; expiresAt: string;
 }
+export interface ExecutionWalletExtension extends RuntimeBinding {chainId:number;registry:string;agentId:string;executionWallet:string;metadataKey:'agentproof.executionWallet.v1';encoding:'abi.encode(address)'}
 export interface AgentCard {
   name: string; description: string; version: string;
   provider: {organization:string;url:string};
   supportedInterfaces: {url:string;protocolBinding:string;protocolVersion:string}[];
-  capabilities: {extensions:{uri:string;required:boolean;params:RuntimeBinding}[]; streaming?:boolean;pushNotifications?:boolean};
+  capabilities: {extensions:{uri:string;required:boolean;params:RuntimeBinding | ExecutionWalletExtension}[]; streaming?:boolean;pushNotifications?:boolean};
   defaultInputModes:string[]; defaultOutputModes:string[];
   skills:{id:string;name:string;description:string;tags:string[]}[];
   securitySchemes: {[key:string]: {httpAuthSecurityScheme:{scheme:string;bearerFormat?:string}}};
@@ -38,11 +39,11 @@ export interface Purchase {
   merchant:string; purpose:'payment'|'browsing';productId:string;
   amount:number;currency:'KRW';quantity:number;createdAt:string;expiresAt:string;nonce:string;
 }
-export interface Presentation {
+export interface Presentation<T = Purchase> {
   presentationVersion:'agentproof-presentation-v1';requestId:string;
   claimedIdentity:Identity;presentedAgentCard:AgentCard;
   presentedPassport?:Passport;companyAttestation?:CompanyAttestation;
-  tapRequest:Purchase;submittedAt:string;bundleHash:string;
+  tapRequest:T;submittedAt:string;bundleHash:string;
   passportProof?:{challengeId:string;signature:string};
 }
 export interface Challenge {

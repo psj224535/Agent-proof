@@ -18,13 +18,13 @@ import {apsFilter} from '../aps-passport-filter/index.ts';
 import {companyFilter,checkCompanyStatus} from '../company-filter/index.ts';
 import {tapFilter} from '../visa-tap-filter/index.ts';
 import {verifyHttp} from '../visa-tap-filter/http-signatures.ts';
-export interface EngineOptions {store:Store;fetcher:Fetcher;registryReader:RegistryReader;trust:TrustStore;ticketKey:KeyPair;audience:string;chainId:number;registryAddress:string;development:boolean;assuranceProfile?:Profile;now?:()=>number}
+export interface EngineOptions {store:Store;fetcher:Fetcher;registryReader:RegistryReader;trust:TrustStore;ticketKey:KeyPair;audience:string;chainId:number;registryAddress:string;development:boolean;assuranceProfile?:Profile;now?:()=>number;allowLocalDemoAttestation?:boolean;onProgress?:(traceId:string,event:string,data:unknown)=>Promise<void>}
 export interface TicketClaims {
  iss:string;sub:string;aud:string;iat:number;exp:number;jti:string;traceId:string;
  subjectAgent:Presentation['claimedIdentity'];assuranceProfile:string;policyProfile:string;
  enabledModules:ModuleId[];evidenceBundleHash:string;currentKeyId:string;publicKeyMultibase:string;
- allowedOperation:'mock-purchase';requestHash:string;configurationVersion:number;
- development:boolean;anchor:RegistrySnapshot;companyAttestation?:CompanyAttestation;
+ allowedOperation:'mock-purchase'|'onchain-trade';requestHash:string;configurationVersion:number;
+ development:boolean;anchor:RegistrySnapshot;agentCardHash?:string;companyAttestation?:CompanyAttestation;
 }
 const names:Record<ModuleId,string>={erc8004:'ERC8004',a2a:'A2A','aps-passport':'PASSPORT','company-attestation':'COMPANY_ATTESTATION','visa-tap':'TAP_SIGNATURE'};
 export class Verifier {
@@ -35,11 +35,11 @@ export class Verifier {
   const now=this.now();const ch:Challenge={...v,challengeId:randomUUID(),nonce:randomHex(32),audience:this.options.audience,operation:'mock-purchase',issuedAt:iso(now),expiresAt:iso(now+120000)};
   await this.options.store.challenge(ch);return ch;
  }
- async authenticate(bundle:Presentation,transport:Transport):Promise<AuthenticationResult>{
+ async authenticate(bundle:Presentation<any>,transport:Transport):Promise<AuthenticationResult>{
   validate(presentationSchema,bundle);
   ensure(hash(parseJsonStrict(transport.rawBody))===hash(bundle),'TRANSPORT_BODY_MISMATCH');
   const o=this.options,now=this.now(),configuration=structuredClone(await o.store.configuration());
-  const traceId=await o.store.newTrace(bundle.claimedIdentity,now);
+  const traceId=await o.store.newTrace(bundle.claimedIdentity,now);await o.onProgress?.(traceId,'AUTHENTICATION_STARTED',{requestId:bundle.requestId});
   const requestEvidence=await o.store.saveEvidence({bundle,transport:{method:transport.method,path:transport.path,authority:transport.authority,bodyHash:hash(bundle),headers:transport.headers}});
   await o.store.audit(traceId,'REQUEST_RECEIVED',{input:{bundleHash:bundle.bundleHash},references:[requestEvidence],configuration,now});
   const context:Context={bundle,transport,configuration,store:o.store,fetcher:o.fetcher,registryReader:o.registryReader,trust:o.trust,chainId:o.chainId,registryAddress:o.registryAddress,audience:o.audience,allowedVersions:['1.0.0'],now,traceId,signal:new AbortController().signal,evidence:{},results:[]};
@@ -52,7 +52,7 @@ export class Verifier {
    else if(stopped)r=skipped(mod.id,context,'EARLY_STOP');
    else if(mod.dependencies.some(id=>context.results.find(x=>x.moduleId===id)?.status!=='PASS'))r=skipped(mod.id,context,'DEPENDENCY_NOT_VERIFIED');
    else {
-    await o.store.audit(traceId,names[mod.id]+'_CHECK_STARTED',{moduleId:mod.id,now:this.now()});
+    await o.store.audit(traceId,names[mod.id]+'_CHECK_STARTED',{moduleId:mod.id,now:this.now()});await o.onProgress?.(traceId,'MODULE_STARTED',{moduleId:mod.id});
     const local:Context={...context,evidence:{},signal:AbortSignal.timeout(configuration.modules[mod.id].timeoutMs)};
     // A timed-out module gets an isolated context; a late resolution cannot alter accepted state.
     let timer:ReturnType<typeof setTimeout>;
@@ -62,7 +62,7 @@ export class Verifier {
     r=await Promise.race([mod.verify(local),timeout]);clearTimeout(timer!);
     if(r.status==='PASS')for(const k of ['snapshot','registration','binding','challengeId','tap'] as const){if(local[k]!==undefined)(context as any)[k]=local[k];}
    }
-   context.results.push(r);
+   context.results.push(r);await o.onProgress?.(traceId,'MODULE_COMPLETED',r);
    const evidence=await o.store.saveEvidence(r.evidence);
    await o.store.audit(traceId,names[mod.id]+'_CHECK_COMPLETED',{moduleId:mod.id,input:r.inputHash,output:r.outputHash,reasonCodes:r.reasonCodes,references:[evidence],now:this.now()});
    if(mod.id==='a2a'&&r.status==='PASS')await o.store.audit(traceId,'A2A_CARD_COMPARED',{moduleId:mod.id,output:r.outputHash});
@@ -80,12 +80,12 @@ export class Verifier {
     ensure(context.binding&&context.snapshot&&context.tap,'MISSING_AUTHENTICATED_BINDING');
     if(!o.development){
      ensure(context.snapshot.source!=='simulation','SIMULATION_CANNOT_PROVE_PRODUCTION_IDENTITY');
-     if(bundle.companyAttestation&&context.results.some(r=>r.moduleId==='company-attestation'&&r.status==='PASS'))ensure(!o.trust.issuers[bundle.companyAttestation.issuer]?.testIssuer,'TEST_ISSUER_CANNOT_PROVE_PRODUCTION_COMPANY');
+     if(bundle.companyAttestation&&context.results.some(r=>r.moduleId==='company-attestation'&&r.status==='PASS'))ensure(!o.trust.issuers[bundle.companyAttestation.issuer]?.testIssuer||(o.allowLocalDemoAttestation===true&&o.assuranceProfile==='SEPOLIA_TESTNET'),'TEST_ISSUER_CANNOT_PROVE_PRODUCTION_COMPANY');
     }
     // Tickets never outlive any accepted source or the signed request.
     const expiresAt=Math.min(this.now()+300000,...context.results.filter(r=>r.status==='PASS'&&r.expiresAt).map(r=>Date.parse(r.expiresAt!)));
     ensure(expiresAt>this.now(),'EVIDENCE_EXPIRED_DURING_VERIFICATION');
-    const claims:TicketClaims={iss:'agentproof:'+o.audience,sub:identityScope(context),aud:o.audience,iat:Math.floor(this.now()/1000),exp:Math.floor(expiresAt/1000),jti:randomUUID(),traceId,subjectAgent:bundle.claimedIdentity,assuranceProfile:result.assuranceProfile,policyProfile:result.policyProfile,enabledModules:result.enabledModules,evidenceBundleHash:result.evidenceBundleHash,currentKeyId:context.binding.runtimeKeyId,publicKeyMultibase:context.binding.publicKeyMultibase,allowedOperation:'mock-purchase',requestHash:hash(bundle.tapRequest),configurationVersion:configuration.version,development:o.development,anchor:context.snapshot};
+    const claims:TicketClaims={iss:'agentproof:'+o.audience,sub:identityScope(context),aud:o.audience,iat:Math.floor(this.now()/1000),exp:Math.floor(expiresAt/1000),jti:randomUUID(),traceId,subjectAgent:bundle.claimedIdentity,assuranceProfile:result.assuranceProfile,policyProfile:result.policyProfile,enabledModules:result.enabledModules,evidenceBundleHash:result.evidenceBundleHash,currentKeyId:context.binding.runtimeKeyId,publicKeyMultibase:context.binding.publicKeyMultibase,allowedOperation:'version' in bundle.tapRequest?'onchain-trade':'mock-purchase',requestHash:hash(bundle.tapRequest),configurationVersion:configuration.version,development:o.development,anchor:context.snapshot,agentCardHash:hash(bundle.presentedAgentCard)};
     if(context.results.some(r=>r.moduleId==='company-attestation'&&r.status==='PASS'))claims.companyAttestation=bundle.companyAttestation;
     const token=this.encodeTicket(claims);
     await o.store.commitAuthentication({scope:identityScope(context),nonce:context.tap.nonce,requestId:bundle.requestId,traceId,expiresAt:Date.parse(bundle.tapRequest.expiresAt),now:this.now(),challengeId:context.challengeId,ticket:{jti:claims.jti,hash:hash(token),expiresAt:claims.exp*1000}});
@@ -105,7 +105,7 @@ export class Verifier {
   let h:any,p:any;try{h=parseJsonStrict(Buffer.from(parts[0],'base64url'));p=parseJsonStrict(Buffer.from(parts[1],'base64url'));}catch{throw new VerificationFailure('TICKET_FORMAT');}
   ensure(h.alg==='EdDSA'&&h.typ==='agentproof-auth+jwt'&&h.kid===this.options.ticketKey.keyId&&Object.keys(h).length===3,'TICKET_HEADER');
   ensure(verifyBytes(this.options.ticketKey.publicKeyMultibase,Buffer.from(parts[0]+'.'+parts[1]),parts[2]),'TICKET_SIGNATURE_INVALID');
-  ensure(p.iss==='agentproof:'+this.options.audience&&p.aud===this.options.audience&&p.allowedOperation==='mock-purchase','TICKET_AUDIENCE_OR_OPERATION');
+  ensure(p.iss==='agentproof:'+this.options.audience&&p.aud===this.options.audience&&['mock-purchase','onchain-trade'].includes(p.allowedOperation),'TICKET_AUDIENCE_OR_OPERATION');
   ensure(p.development===this.options.development,'TICKET_DEVELOPMENT_MISMATCH');
   ensure(Number.isSafeInteger(p.iat)&&Number.isSafeInteger(p.exp)&&p.exp>p.iat&&p.exp-p.iat<=300&&p.iat*1000<=this.now()+30000&&p.exp*1000>this.now(),'TICKET_EXPIRED');
   return p as TicketClaims;
@@ -113,7 +113,7 @@ export class Verifier {
  async protectedPurchase(t:Transport):Promise<object>{
   ensure(t.method==='POST'&&t.path===MOCK_PATH&&t.authority===this.options.audience,'PROTECTED_TARGET_MISMATCH');
   const token=t.headers.authorization?.replace(/^Bearer /,'');ensure(token&&t.headers.authorization==='Bearer '+token,'TICKET_REQUIRED');
-  const c=this.decodeTicket(token),now=this.now();
+  const c=this.decodeTicket(token),now=this.now();ensure(c.allowedOperation==='mock-purchase','TICKET_AUDIENCE_OR_OPERATION');
   const purchase=validate<Purchase>(purchaseSchema,parseJsonStrict(t.rawBody));ensure(hash(purchase)===c.requestHash,'TICKET_ACTION_MISMATCH');
   const sig=verifyHttp(t,c.publicKeyMultibase,c.currentKeyId,now,true);
   ensure(sig.tag===(purchase.purpose==='payment'?'agent-payer-auth':'agent-browser-auth'),'PROTECTED_PURPOSE_MISMATCH');

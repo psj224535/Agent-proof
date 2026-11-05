@@ -36,8 +36,8 @@ export function presentation(d:AgentDocuments,audience:string,now=Date.now(),pur
  if(d.attestation)p.companyAttestation=structuredClone(d.attestation);
  p.bundleHash=bundleHash(p);return p;
 }
-export function addProof(p:Presentation,ch:Challenge,key:KeyPair):void {p.passportProof={challengeId:ch.challengeId,signature:signChallenge(key,ch)};}
-export function authenticateTransport(p:Presentation,key:KeyPair,audience:string):Transport {
+export function addProof(p:Presentation<any>,ch:Challenge,key:KeyPair):void {p.passportProof={challengeId:ch.challengeId,signature:signChallenge(key,ch)};}
+export function authenticateTransport(p:Presentation<any>,key:KeyPair,audience:string):Transport {
  const t:Transport={method:'POST',authority:audience,path:AUTH_PATH,rawBody:Buffer.from(JSON.stringify(p)),headers:{'content-type':'application/json'}};
  t.headers=signHttp(key,t,{created:Math.floor(Date.parse(p.tapRequest.createdAt)/1000),expires:Math.floor(Date.parse(p.tapRequest.expiresAt)/1000),nonce:p.tapRequest.nonce,keyid:key.keyId,tag:p.tapRequest.purpose==='payment'?'agent-payer-auth':'agent-browser-auth'});return t;
 }

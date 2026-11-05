@@ -34,7 +34,7 @@ export async function serve(port:number,handler:(r:Request)=>Promise<void>,host=
    if(headers.origin)ensure(headers.origin==='http://'+authority||headers.origin==='https://'+authority,'CROSS_ORIGIN_REQUEST_BLOCKED');
    const method=req.method??'GET';const rawPath=req.url??'/';ensure(rawPath.startsWith('/')&&!rawPath.startsWith('//'),'INVALID_REQUEST_TARGET');
    const path=new URL(rawPath,'http://'+authority).pathname;
-   if(rawPath.includes('?')&&(path==='/api/v1/authenticate'||path==='/api/v1/protected/mock-purchase'))throw new VerificationFailure('QUERY_NOT_SUPPORTED_IN_SIGNED_PROFILE');
+   if(rawPath.includes('?')&&(path==='/api/v1/authenticate'||path==='/api/v1/protected/mock-purchase'||(method==='POST'&&['/api/trading/authorize','/api/trading/execution-authorization','/api/trading/preflight','/api/trading/execution-result'].includes(path))))throw new VerificationFailure('QUERY_NOT_SUPPORTED_IN_SIGNED_PROFILE');
    let size=0;const chunks:Buffer[]=[];
    if(['POST','PATCH','PUT'].includes(method)){
     ensure(/^application\/json(?:;|$)/i.test(headers['content-type']??''),'JSON_CONTENT_TYPE_REQUIRED');ensure(!headers['content-encoding'],'CONTENT_ENCODING_UNSUPPORTED');

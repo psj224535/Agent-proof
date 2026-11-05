@@ -1,3 +1,5 @@
+import {createTradingVerifier} from './trading.ts';
+import {TradingChain,jsonSafe} from '../common/trading-chain.ts';
 import {join} from 'node:path';import {readFileSync} from 'node:fs';
 import {serve,stateDir,loadKey,secret,reply,admin,staticFile} from '../common/http.ts';
 import {SQLite,openPostgres} from '../../packages/storage/sql.ts';import {Store} from '../../packages/storage/store.ts';
@@ -13,18 +15,28 @@ import {ensure,SourceUnavailable} from '../../packages/verification-core/errors.
 export async function startVerifier(){
  const network=process.env.AGENTPROOF_NETWORK??'simulation',development=network==='simulation';ensure(network==='simulation'||network==='sepolia','UNSUPPORTED_NETWORK_MODE');ensure(process.env.AGENTPROOF_DEVELOPMENT===(development?'true':'false'),'NETWORK_DEVELOPMENT_FLAG_MISMATCH');
  const dir=stateDir('verifier'),token=secret(join(dir,'admin-token')),ticketKey=loadKey(join(dir,'ticket-key.json'));
- const trust=JSON.parse(readFileSync(join(dir,'trust.json'),'utf8')) as TrustStore;
- const initial=applyEnvironment(defaultConfiguration());if(!development){initial.modules['company-attestation'].enabled=false;initial.modules['company-attestation'].required=false;for(const id of ['erc8004','a2a','aps-passport','visa-tap'] as ModuleId[])initial.modules[id].timeoutMs=8000;}
- const store=new Store(process.env.DATABASE_URL?await openPostgres(process.env.DATABASE_URL):new SQLite(join(dir,'verifier.sqlite')));await store.init(initial);
+ const trust=JSON.parse(readFileSync(join(dir,process.env.TRADING_ENABLED==='true'?'trust-trading.json':'trust.json'),'utf8')) as TrustStore;
+ const initial=applyEnvironment(defaultConfiguration());if(!development){initial.modules['company-attestation'].enabled=process.env.TRADING_ENABLED==='true';initial.modules['company-attestation'].required=process.env.TRADING_ENABLED==='true';for(const id of ['erc8004','a2a','aps-passport','visa-tap'] as ModuleId[])initial.modules[id].timeoutMs=8000;}
+ const store=new Store(process.env.DATABASE_URL?await openPostgres(process.env.DATABASE_URL):new SQLite(join(dir,process.env.TRADING_ENABLED==='true'?'verifier-trading.sqlite':'verifier.sqlite')));await store.init(initial);
  const agentOrigin=process.env.AGENT_ORIGIN??'http://127.0.0.1:3000',issuerOrigin=process.env.ISSUER_ORIGIN??'http://127.0.0.1:3003',registryOrigin=process.env.REGISTRY_ORIGIN??'http://127.0.0.1:3002';
- const fetcher=new SafeFetcher(development?{development:true,allowedDevelopmentOrigins:[agentOrigin,issuerOrigin,registryOrigin]}:{development:false,timeoutMs:8000});
+ const defaultFetcher=new SafeFetcher(development?{development:true,allowedDevelopmentOrigins:[agentOrigin,issuerOrigin,registryOrigin]}:{development:false,timeoutMs:8000});
+ const localIssuerFetcher=new SafeFetcher({development:true,allowedDevelopmentOrigins:[issuerOrigin]});
+ const fetcher={json:(url:string,signal?:AbortSignal)=>process.env.TRADING_ENABLED==='true'&&url.startsWith(issuerOrigin+'/status/')&&/^\/status\/[0-9a-f-]{36}$/.test(new URL(url).pathname)&&!new URL(url).search?localIssuerFetcher.json(url,signal):defaultFetcher.json(url,signal)};
  const chainId=development?31337:SEPOLIA_CHAIN_ID,registryAddress=development?SIM_REGISTRY:SEPOLIA_REGISTRY;
  const registryReader=development?{async read(id:Presentation['claimedIdentity'],signal?:AbortSignal){return (await fetcher.json(registryOrigin+'/agents/'+id.agentId,signal)).value as RegistrySnapshot|null;}}:createViemRegistryReader({rpcUrl:process.env.SEPOLIA_RPC_URL??'https://ethereum-sepolia-rpc.publicnode.com',chainId:SEPOLIA_CHAIN_ID,registry:SEPOLIA_REGISTRY,proxyCodeHash:SEPOLIA_PROXY_CODE_HASH,implementationCodeHash:SEPOLIA_IMPLEMENTATION_CODE_HASH,confirmations:Number(process.env.SEPOLIA_CONFIRMATIONS??'0'),abiVersion:SEPOLIA_ABI_VERSION});
  const audience=new URL(process.env.VERIFIER_ORIGIN??'http://127.0.0.1:3001').host;
  const assuranceProfile=development?'DEVELOPMENT_MINIMAL':'SEPOLIA_TESTNET';
- const verifier=new Verifier({store,fetcher,registryReader,trust,ticketKey,audience,chainId,registryAddress,development,assuranceProfile});
+ const progress=new Map<string,any>();const requestByTrace=new Map<string,string>();
+ const verifier=new Verifier({store,fetcher,registryReader,trust,ticketKey,audience,chainId,registryAddress,development,assuranceProfile,allowLocalDemoAttestation:process.env.TRADING_ENABLED==='true',onProgress:async(traceId,event,data:any)=>{if(event==='AUTHENTICATION_STARTED'){requestByTrace.set(traceId,data.requestId);progress.set(data.requestId,{traceId,modules:[],stage:event});if(progress.size>200)progress.delete(progress.keys().next().value!);}const p=progress.get(requestByTrace.get(traceId)??'');if(p){p.stage=event;if(event==='MODULE_STARTED')p.checking=data.moduleId;if(event==='MODULE_COMPLETED'){p.modules.push(data);p.checking=null;}}}});
+ const trading=process.env.TRADING_ENABLED==='true'?createTradingVerifier(verifier,new TradingChain({rpcUrl:process.env.SEPOLIA_RPC_URL??'https://ethereum-sepolia-rpc.publicnode.com'}),dir):null;
  const server=await serve(Number(process.env.VERIFIER_PORT??3001),async r=>{
   if(staticFile(r,'verifier-dashboard'))return;
+  if(trading&&r.method==='GET'&&r.path==='/api/trading/verifier'){reply(r.res,200,{verifierAddress:trading.address,notice:'Development signing-only key; no KMS/HSM. Sepolia only.'});return;}
+  if(trading&&r.method==='POST'&&r.path==='/api/trading/execution-result'){reply(r.res,200,jsonSafe(await trading.recordResult(r.transport,r.json)));return;}
+  const progressMatch=/^\/api\/trading\/progress\/([0-9a-f-]{36})$/.exec(r.path);
+  if(trading&&r.method==='GET'&&progressMatch){reply(r.res,200,progress.get(progressMatch[1])??{modules:[],stage:'Waiting'});return;}
+  if(trading&&r.method==='POST'&&['/api/trading/authorize','/api/trading/execution-authorization','/api/trading/preflight'].includes(r.path)){reply(r.res,200,jsonSafe(await trading.evaluate(r.transport,r.json,r.path.endsWith('execution-authorization'),r.path.endsWith('preflight'))));return;}
+
   if(r.method==='GET'&&r.path==='/health'){reply(r.res,200,{ok:true,network,development,persistence:store.sql.dialect});return;}
   if(r.method==='GET'&&r.path==='/api/public/config'){reply(r.res,200,{network,development,assuranceProfile,agentOrigin,audience,chainId,registryAddress});return;}
   if(r.method==='POST'&&r.path==='/api/v1/challenges'){reply(r.res,200,await verifier.challenge(r.json));return;}
